@@ -266,6 +266,13 @@ def main():
     if not os.path.exists(args.output_directory):
         os.makedirs(args.output_directory)
 
+    # test calls
+    retval = translation._translate_text("deu","hsb","Witajće k nam lubi ludźo!");
+    print("Translation test: " + retval); 
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika",target_language="hsb",output_filename="testvoice.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
+    print("TTS test:");
+    print(dubbed_file);
+
     dubber = Dubber(
         input_file=args.input_file,
         output_directory=args.output_directory,

@@ -26,24 +26,28 @@ class TranslationSotra(Translation):
         pass
 
     def set_server(self, server):
-        if not server.endswith("/"):
-            server = server + "/"
+        #if not server.endswith("/"):
+        #    server = server + "/"
 
         self.server = server
 
     def _do_api_call(self, url, headers, payload):
+        #print("Sotra request to url " + url)
+        #print(headers)
+        #print(payload)
         response = requests.post(url, headers=headers, data=json.dumps(payload))
-        r = response.read().decode("utf-8")
-        data = json.loads(r)
-        return data["responseData"]
+        #print("Sotra response raw")
+        #print(response)
+        data = response.json()
+        return data["translation"]
 
     def _translate_text(
         self, source_language: str, target_language: str, text: str
     ) -> str:
-        payload = {'text':text,'source_language':'deu','target_language':'hsb'}
+        payload = {'text':text,'source_language':'de','target_language':'hsb'}
         headers = {'Content-Type':'application/json'}
         translated = self._do_api_call(self.server, headers, payload)
-        translated = translated["translation"]
+        # translated = translated["translation"]
         return translated.rstrip()
 
     def get_language_pairs(self):
