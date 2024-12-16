@@ -69,7 +69,7 @@ class CommandLine:
             "--tts",
             type=str,
             default="mms",
-            choices=["mms", "coqui", "edge", "cli", "api"],
+            choices=["mms", "coqui", "edge", "cli", "api", "bamborak"],
             help=(
                 "Text to Speech engine to use. Choices are:\n"
                 "'mms': Meta Multilingual Speech engine, supports +1100 languages.\n"
@@ -77,6 +77,7 @@ class CommandLine:
                 "'edge': Microsoft Edge TSS.\n"
                 "'cli': User defined TTS invoked from command line.\n"
                 "'api': Implements a user defined TTS API contract to enable non supported TTS.\n"
+                "'bamborak': A very custom implementation.\n"
             ),
         )
         parser.add_argument(
@@ -101,11 +102,12 @@ class CommandLine:
             "--translator",
             type=str,
             default="nllb",
-            choices=["nllb", "apertium"],
+            choices=["nllb", "apertium", "sotra"],
             help=(
                 "Text to Speech engine to use. Choices are:\n"
                 "'nllb': Meta's no Language Left Behind (NLLB).\n"
                 "'apertium': Apertium compatible API server.\n"
+                "'sotra': A very custom implementation.\n"
             ),
         )
         parser.add_argument(

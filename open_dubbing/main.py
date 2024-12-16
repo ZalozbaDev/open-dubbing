@@ -32,8 +32,10 @@ from open_dubbing.text_to_speech_api import TextToSpeechAPI
 from open_dubbing.text_to_speech_cli import TextToSpeechCLI
 from open_dubbing.text_to_speech_edge import TextToSpeechEdge
 from open_dubbing.text_to_speech_mms import TextToSpeechMMS
+from open_dubbing.text_to_speech_bamborak import TextToSpeechBamborak
 from open_dubbing.translation_apertium import TranslationApertium
 from open_dubbing.translation_nllb import TranslationNLLB
+from open_dubbing.translation_sotra import TranslationSotra
 
 
 def _init_logging(log_level):
@@ -165,6 +167,12 @@ def _get_selected_tts(
             msg = "When using TTS's API, you need to specify with --tts_api_server the URL of the server"
             log_error_and_exit(msg, ExitCode.NO_TTS_API_SERVER)
 
+    elif selected_tts == "bamborak":
+        tts = TextToSpeechBamborak(device, tts_api_server)
+        if len(tts_api_server) == 0:
+            msg = "When using TTS's API, you need to specify with --tts_api_server the URL of the server"
+            log_error_and_exit(msg, ExitCode.NO_TTS_API_SERVER)
+
     else:
         raise ValueError(f"Invalid tts value {selected_tts}")
 
@@ -184,6 +192,14 @@ def _get_selected_translator(
             log_error_and_exit(msg, ExitCode.NO_APERTIUM_SERVER)
 
         translation = TranslationApertium(device)
+        translation.set_server(server)
+    elif translator == "sotra":
+        server = apertium_server
+        if len(server) == 0:
+            msg = "When using Sotra's API, you need to specify with --apertium_server the URL of the server"
+            log_error_and_exit(msg, ExitCode.NO_APERTIUM_SERVER)
+
+        translation = TranslationSotra(device)
         translation.set_server(server)
     else:
         raise ValueError(f"Invalid translator value {translator}")
