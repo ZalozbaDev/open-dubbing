@@ -45,7 +45,7 @@ jobs:
       fail-fast: false
       matrix:
          os: [ubuntu-latest, macos-latest, windows-latest]
-         python-version: [3.10.15, 3.11, 3.12]
+         python-version: [3.10.15, 3.11, 3.12, 3.13]
          extra_lib: [none, coqui_yes, openai_yes] # Coqui pools different versions of transformers
          exclude:
           - os: macos-latest
@@ -60,6 +60,12 @@ jobs:
             python-version: 3.10.15
           - extra_lib: openai_yes
             python-version: 3.11
+          - extra_lib: coqui_yes
+            python-version: 3.13 # Coqui not available in Py 3.13 as 2025/6/15
+          - extra_lib: coqui_no
+            python-version: 3.13
+          - os: windows-latest # Sentence package not avaiable
+            python-version: 3.13
 
     steps:
     - uses: actions/checkout@v4
