@@ -75,7 +75,7 @@ class CommandLine:
                 "'mms': Meta Multilingual Speech engine, supports +1100 languages.\n"
                 "'coqui': Coqui TTS, an open-source alternative for high-quality TTS.\n"
                 "'openai': OpenAI TTS.\n"
-                "'edge': Microsoft Edge TSS.\n"
+                "'edge': Microsoft Edge TTS.\n"
                 "'cli': User defined TTS invoked from command line.\n"
                 "'api': Implements a user defined TTS API contract to enable non supported TTS.\n"
             ),
@@ -109,7 +109,7 @@ class CommandLine:
             default="nllb",
             choices=["nllb", "apertium"],
             help=(
-                "Text to Speech engine to use. Choices are:\n"
+                "Translation engine to use. Choices are:\n"
                 "'nllb': Meta's no Language Left Behind (NLLB).\n"
                 "'apertium': Apertium compatible API server.\n"
             ),
