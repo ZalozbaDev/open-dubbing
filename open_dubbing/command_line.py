@@ -128,6 +128,15 @@ class CommandLine:
             choices=["cpu", "cuda"],
             help=("Device to use"),
         )
+
+        parser.add_argument(
+            "--device_pyannote",
+            type=str,
+            default=None,
+            choices=["cpu", "cuda"],
+            help=("Device to use for pyannote, if not defined the same that --device"),
+        )
+
         parser.add_argument(
             "--cpu_threads",
             type=int,

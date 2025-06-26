@@ -102,6 +102,7 @@ class TestDubbing:
                 translation=None,
                 stt=None,
                 device="cpu",
+                device_pyannote=None,
                 clean_intermediate_files=True,
             )
 
@@ -128,6 +129,7 @@ class TestDubbing:
                 translation=None,
                 stt=None,
                 device="cpu",
+                device_pyannote=None,
                 clean_intermediate_files=False,
             )
 

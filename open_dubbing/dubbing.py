@@ -103,6 +103,7 @@ class Dubber:
         translation: Translation,
         stt: SpeechToText,
         device: str,
+        device_pyannote: str,
         cpu_threads: int = 0,
         clean_intermediate_files: bool = False,
         original_subtitles: bool = False,
@@ -121,6 +122,7 @@ class Dubber:
         self.translation = translation
         self.stt = stt
         self.device = device
+        self.device_pyannote = device_pyannote
         self.cpu_threads = cpu_threads
         self.clean_intermediate_files = clean_intermediate_files
         self.preprocessing_output = None
@@ -203,10 +205,11 @@ class Dubber:
             demucs.assemble_split_audio_file_paths(command=demucs_command)
         )
 
+        device_pyannote = self.device_pyannote if self.device_pyannote else self.device
         utterance_metadata = audio_processing.create_pyannote_timestamps(
             audio_file=audio_file,
             pipeline=self.pyannote_pipeline,
-            device=self.device,
+            device=device_pyannote,
         )
         utterance_metadata = audio_processing.run_cut_and_save_audio(
             utterance_metadata=utterance_metadata,

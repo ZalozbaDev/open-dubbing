@@ -308,6 +308,7 @@ def main():
         translation=translation,
         stt=stt,
         device=args.device,
+        device_pyannote=args.device_pyannote,
         cpu_threads=args.cpu_threads,
         clean_intermediate_files=args.clean_intermediate_files,
         original_subtitles=args.original_subtitles,
