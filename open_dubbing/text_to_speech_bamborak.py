@@ -36,7 +36,21 @@ class TextToSpeechBamborak(TextToSpeech):
         voices = []
 
         voice = Voice(
-            name="korla",
+            name="korla2",
+            gender="male",
+            region="lusatia",
+        )
+        voices.append(voice)
+
+        voice = Voice(
+            name="cyril",
+            gender="male",
+            region="lusatia",
+        )
+        voices.append(voice)
+
+        voice = Voice(
+            name="michal_multi_2025_02_20",
             gender="male",
             region="lusatia",
         )
@@ -44,6 +58,20 @@ class TextToSpeechBamborak(TextToSpeech):
 
         voice = Voice(
             name="weronika",
+            gender="female",
+            region="lusatia",
+        )
+        voices.append(voice)
+
+        voice = Voice(
+            name="multi_2025_02_11/VCTK_old_16",
+            gender="female",
+            region="lusatia",
+        )
+        voices.append(voice)
+
+        voice = Voice(
+            name="katka_fine_2025_06_10",
             gender="female",
             region="lusatia",
         )
