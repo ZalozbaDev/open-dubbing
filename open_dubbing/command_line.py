@@ -69,16 +69,22 @@ class CommandLine:
             "--tts",
             type=str,
             default="mms",
-            choices=["mms", "coqui", "edge", "cli", "api", "bamborak"],
+            choices=["mms", "coqui", "openai", "edge", "cli", "api", "bamborak"],
             help=(
                 "Text to Speech engine to use. Choices are:\n"
                 "'mms': Meta Multilingual Speech engine, supports +1100 languages.\n"
                 "'coqui': Coqui TTS, an open-source alternative for high-quality TTS.\n"
-                "'edge': Microsoft Edge TSS.\n"
+                "'openai': OpenAI TTS.\n"
+                "'edge': Microsoft Edge TTS.\n"
                 "'cli': User defined TTS invoked from command line.\n"
                 "'api': Implements a user defined TTS API contract to enable non supported TTS.\n"
                 "'bamborak': A very custom implementation.\n"
             ),
+        )
+        parser.add_argument(
+            "--openai_api_key",
+            default=None,
+            help="OpenAI API key used for OpenAI TTS defined by passing this argument or having environment variable the OPENAI_API_KEY defined",
         )
         parser.add_argument(
             "--stt",
@@ -104,7 +110,7 @@ class CommandLine:
             default="nllb",
             choices=["nllb", "apertium", "sotra"],
             help=(
-                "Text to Speech engine to use. Choices are:\n"
+                "Translation engine to use. Choices are:\n"
                 "'nllb': Meta's no Language Left Behind (NLLB).\n"
                 "'apertium': Apertium compatible API server.\n"
                 "'sotra': A very custom implementation.\n"
@@ -124,6 +130,15 @@ class CommandLine:
             choices=["cpu", "cuda"],
             help=("Device to use"),
         )
+
+        parser.add_argument(
+            "--device_pyannote",
+            type=str,
+            default=None,
+            choices=["cpu", "cuda"],
+            help=("Device to use for pyannote, if not defined the same that --device"),
+        )
+
         parser.add_argument(
             "--cpu_threads",
             type=int,

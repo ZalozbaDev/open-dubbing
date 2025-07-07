@@ -1,4 +1,4 @@
-.PHONY: dev run-tests
+.PHONY: dev run-tests run-e2e-tests publish-release tag-version
 
 PATHS = open_dubbing/ tests/ e2e-tests/
 
@@ -18,3 +18,11 @@ publish-release:
 	python setup.py sdist bdist_wheel
 	python -m  twine upload -u "__token__" -p "${PYPI_API_TOKEN}" --repository-url https://upload.pypi.org/legacy/ dist/*
 
+tag-version:
+ifndef VERSION
+	@echo "Error: VERSION parameter is required. Usage: make tag VERSION=x.y.z"
+	@exit 1
+endif
+	git tag -a $(VERSION) -m "Release $(VERSION)"
+	git push origin $(VERSION)
+	echo "Tag $(VERSION) created and pushed to origin."

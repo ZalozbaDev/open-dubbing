@@ -9,11 +9,14 @@ It is designed as a command line tool.
 
 At the moment, it is pure *experimental* and an excuse to help me to understand better STT, TTS and translation systems combined together.
 
+_If you want to see a live system running you can do it at https://www.softcatala.org/doblatge/ (accepts only English and Spanish an dubs only to Catalan).
+It combines this project, https://github.com/Softcatala/subdub-editor (an editor) and https://github.com/Softcatala/dubbing-service (web service)._
+
 # Features
 
 * Build on top of open source models and able to run it locally
 * Dubs automatically a video from a source to a target language
-* Supports multiple Text To Speech (TTS): Coqui, MMS, Edge
+* Supports multiple Text To Speech (TTS): Coqui, MMS, Edge, OpenAI TTS
  * Allows to use any non-supported one by configuring an API or CLI
 * Gender voice detection to allow to assign properly synthetic voice
 * Support for multiple translation engines (Meta's NLLB, Apertium API, etc)
@@ -66,6 +69,12 @@ If you want to install also Coqui-tts, do:
 
 ```shell
 pip install open_dubbing[coqui]
+```
+
+If you want to install also OpenIA support, do:
+
+```shell
+pip install open_dubbing[openai]
 ```
 
 ## Linux additional dependencies
@@ -181,6 +190,7 @@ Core libraries used:
   * [coqui-tts](https://github.com/idiap/coqui-ai-TTS)
   * Meta [mms](https://github.com/facebookresearch/fairseq/tree/main/examples/mms)
   * Microsoft [Edge TTS](https://github.com/rany2/edge-tts)
+  * [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech)
 
 And very special thanks to [ariel](https://github.com/google-marketing-solutions/ariel) from which we leveraged parts of their code base.
 

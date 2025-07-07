@@ -15,13 +15,13 @@
 import dataclasses
 import hashlib
 import json
-import logging
 import os
 import shutil
 import tempfile
 
-from typing import Dict, Final, List, Tuple
+from typing import Any, Dict, Final, List, Tuple
 
+from open_dubbing import logger
 from open_dubbing.preprocessing import PreprocessingArtifacts
 
 
@@ -41,10 +41,10 @@ class Utterance:
         )
         return utterance_metadata_file
 
-    def load_utterances(self) -> tuple[str, str, str]:
+    def load_utterances(self) -> tuple[Any, PreprocessingArtifacts, Any]:
         utterance_metadata_file = self._get_file_name()
 
-        with open(utterance_metadata_file, "r") as file:
+        with open(utterance_metadata_file, "r", encoding="utf-8") as file:
             data = json.load(file)
             utterances = data["utterances"]
             preprocessing_output = PreprocessingArtifacts(
@@ -95,18 +95,32 @@ class Utterance:
                 os.fsync(temporary_file.fileno())
             shutil.copy(temporary_file.name, utterance_metadata_file)
             os.remove(temporary_file.name)
-            logging.debug(
+            logger().debug(
                 "Utterance metadata saved successfully to"
                 f" '{utterance_metadata_file}'"
             )
         except Exception as e:
-            logging.warning(f"Error saving utterance metadata: {e}")
+            logger().warning(f"Error saving utterance metadata: {e}")
+
+    def _get_utterance_fields_to_hash(self, utterance):
+        filtered_fields = {
+            key: value for key, value in utterance.items() if not key.startswith("_")
+        }
+        return filtered_fields
 
     def _hash_utterances(self, utterance_metadata):
         for utterance in utterance_metadata:
-            dict_str = json.dumps(utterance, sort_keys=True)
+            filtered_fields = self._get_utterance_fields_to_hash(utterance)
+            dict_str = json.dumps(filtered_fields, sort_keys=True)
             _hash = hashlib.sha256(dict_str.encode()).hexdigest()
-            utterance["hash"] = _hash
+            utterance["_hash"] = _hash
+
+            for field in ["assigned_voice", "speaker_id"]:
+                value = utterance.get(field)
+                if value:
+                    utterance[f"_{field}_hash"] = hashlib.sha256(
+                        value.encode()
+                    ).hexdigest()
 
         return utterance_metadata
 
@@ -129,18 +143,33 @@ class Utterance:
 
         return paths, dubbed_paths
 
+    def get_modified_utterance_fields(self, utterance):
+        modified = []
+        for field in utterance:
+            field_hash = utterance.get(f"_{field}_hash")
+            if not field_hash:
+                continue
+
+            field_value = utterance[field]
+            current_hash = hashlib.sha256(field_value.encode()).hexdigest()
+
+            if current_hash != field_hash:
+                modified.append(field)
+
+        return modified
+
     def get_modified_utterances(self, utterance_metadata):
         modified = []
         for utterance in utterance_metadata:
-            _hash_utterance = utterance["hash"]
-            del utterance["hash"]
-            dict_str = json.dumps(utterance, sort_keys=True)
+            _hash_utterance = utterance["_hash"]
+            filtered_fields = self._get_utterance_fields_to_hash(utterance)
 
+            dict_str = json.dumps(filtered_fields, sort_keys=True)
             _hash = hashlib.sha256(dict_str.encode()).hexdigest()
             if _hash_utterance != _hash:
                 modified.append(utterance)
 
-        logging.info(f"Modified {len(modified)} utterances")
+        logger().info(f"Modified {len(modified)} utterances")
         return modified
 
     def get_without_empty_blocks(self, utterance_metadata):
@@ -149,55 +178,108 @@ class Utterance:
         for utterance in utterance_metadata:
             text = utterance["text"]
             if len(text) == 0:
-                logging.debug(f"Removing empty block: {utterance}")
+                logger().debug(f"Removing empty block: {utterance}")
                 continue
 
             new_utterance.append(utterance)
 
         return new_utterance
 
+    def _get_highest_id(self, utterance_metadata):
+        highest_id = 1
+        for utterance in utterance_metadata:
+            id = utterance["id"]
+            if id > highest_id:
+                highest_id = id
+        return highest_id
+
+    def _create_new_utterance(self, update, new_id):
+        mandatory_fields = [
+            "speaker_id",
+            "translated_text",
+            "assigned_voice",
+            "gender",
+            "start",
+            "end",
+        ]
+
+        new_utterance = {"id": new_id}
+
+        for field in mandatory_fields:
+            value = update.get(field, None)
+            if not value:
+                logger().warning(
+                    f"Missing field '{field}' when adding new utterance with id '{new_id}'"
+                )
+                return None
+
+            new_utterance[field] = value
+
+        return new_utterance
+
+    def _update_utterance(self, update, utterance):
+        updateable_fields = [
+            "speaker_id",
+            "translated_text",
+            "speed",
+            "assigned_voice",
+            "for_dubbing",
+            "gender",
+            "start",
+            "end",
+        ]
+        for field in updateable_fields:
+            value = update.get(field, None)
+            if not value:
+                continue
+
+            utterance[field] = value
+        return utterance
+
     def update_utterances(self, utterance_master, utterance_update):
-        id_to_update = {}
+        id_to_update_or_delete = {}
+        id_to_create = {}
         utterance_new = []
 
         for utterance in utterance_update:
             id = utterance["id"]
-            id_to_update[id] = utterance
+            operation = utterance["operation"]
+            if operation == "create":
+                if id == 0:
+                    new_id = self._get_highest_id(utterance_master) + 1
+                    new_utterance = self._create_new_utterance(utterance, new_id)
+                    if new_utterance:
+                        utterance_new.append(new_utterance)
+                else:
+                    id_to_create[id] = utterance
+            else:
+                id_to_update_or_delete[id] = utterance
 
         for utterance in utterance_master:
             id = utterance["id"]
-            update = id_to_update.get(id, None)
+
+            update = id_to_update_or_delete.get(id, None)
             if not update:
                 utterance_new.append(utterance)
-                continue
+            else:
+                operation = update.get("operation", None)
+                if not operation:
+                    raise ValueError("No operation field defined")
 
-            operation = update.get("operation", None)
-            if not operation:
-                raise ValueError("No operation field defined")
-
-            if operation == "delete":
-                continue
-
-            if operation != "update":
-                raise ValueError(f"Invalid operation {operation}")
-
-            updateable_fields = [
-                "speaker_id",
-                "translated_text",
-                "speed",
-                "assigned_voice",
-                "for_dubbing",
-                "gender",
-                "start",
-                "end",
-            ]
-            for field in updateable_fields:
-                value = update.get(field, None)
-                if not value:
+                if operation == "delete":
                     continue
 
-                utterance[field] = value
+                if operation != "update":
+                    raise ValueError(f"Invalid operation {operation}")
 
-            utterance_new.append(utterance)
+                utterance = self._update_utterance(update, utterance)
+                utterance_new.append(utterance)
+
+            create = id_to_create.get(id, None)
+            if create:
+                new_id = self._get_highest_id(utterance_master) + 1
+                new_utterance = self._create_new_utterance(create, new_id)
+                if new_utterance:
+                    utterance_new.append(new_utterance)
 
         return utterance_new

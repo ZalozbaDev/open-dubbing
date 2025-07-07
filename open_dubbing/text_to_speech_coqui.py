@@ -12,17 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
-
 from typing import List
 
 from iso639 import Lang
 
+from open_dubbing import logger
 from open_dubbing.coqui import Coqui
 from open_dubbing.text_to_speech import TextToSpeech, Voice
 
 
 class TextToSpeechCoqui(TextToSpeech):
+
+    DEFAULT_VOICE = "default"
 
     def __init__(self, device="cpu"):
         super().__init__()
@@ -48,8 +49,10 @@ class TextToSpeechCoqui(TextToSpeech):
         if language_code == "cat":
             voices.append(Voice(name="pau", gender="Male"))
             voices.append(Voice(name="ona", gender="Female"))
+        else:
+            voices.append(Voice(name=self.DEFAULT_VOICE, gender="Male"))
 
-        logging.debug(
+        logger().debug(
             f"text_to_speech_coqui.get_available_voices: {voices} for language {language_code}"
         )
         return voices
@@ -64,8 +67,11 @@ class TextToSpeechCoqui(TextToSpeech):
         speed: float,
     ) -> str:
 
+        if assigned_voice == self.DEFAULT_VOICE:
+            assigned_voice = None
+
         wav_file = output_filename.replace(".mp3", ".wav")
-        logging.debug(
+        logger().debug(
             f"text_to_speech.client.synthesize_speech: pre synthesize_speech: '{text}', '{target_language}', file: {wav_file}, speed: {speed}, voice: {assigned_voice}"
         )
         iso_639_1 = self._get_iso_639_1(target_language)
@@ -74,7 +80,7 @@ class TextToSpeechCoqui(TextToSpeech):
         )
 
         self._convert_to_mp3(wav_file, output_filename)
-        logging.debug(
+        logger().debug(
             f"text_to_speech.client.synthesize_speech: output_filename: '{output_filename}'"
         )
         return output_filename

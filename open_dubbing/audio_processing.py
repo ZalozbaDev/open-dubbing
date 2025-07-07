@@ -13,16 +13,19 @@
 # limitations under the License.
 
 
-import logging
 import os
 import warnings
 
 from typing import Final, Mapping, Sequence
 
+import numpy as np
 import torch
 
+from moviepy import AudioFileClip
 from pyannote.audio import Pipeline
-from pydub import AudioSegment
+
+from open_dubbing import logger
+from open_dubbing.pydub_audio_segment import AudioSegment
 
 _DEFAULT_DUBBED_VOCALS_AUDIO_FILE: Final[str] = "dubbed_vocals.mp3"
 _DEFAULT_DUBBED_AUDIO_FILE: Final[str] = "dubbed_audio"
@@ -133,13 +136,13 @@ def insert_audio_at_timestamps(
             if for_dubbing is False:
                 start = int(item["start"])
                 end = int(item["end"])
-                logging.debug(
+                logger().debug(
                     f"insert_audio_at_timestamps. Skipping {_file} at start time {start} and end at {end}"
                 )
                 continue
 
             start_time = int(item["start"] * 1000)
-            logging.debug(f"insert_audio_at_timestamps. Open: {_file}")
+            logger().debug(f"insert_audio_at_timestamps. Open: {_file}")
             audio_chunk = AudioSegment.from_mp3(_file)
             output_audio = output_audio.overlay(
                 audio_chunk, position=start_time, loop=False
@@ -147,7 +150,7 @@ def insert_audio_at_timestamps(
         except Exception as e:
             start = int(item["start"])
             end = int(item["end"])
-            logging.error(
+            logger().error(
                 f"insert_audio_at_timestamps. Error on file: {_file} at start time {start} and end at {end}, error: {e}"
             )
 
@@ -156,6 +159,42 @@ def insert_audio_at_timestamps(
     )
     output_audio.export(dubbed_vocals_audio_file, format="mp3")
     return dubbed_vocals_audio_file
+
+
+def _needs_background_normalization(
+    *, background_audio_file: str, threshold: float = 0.1
+):
+    try:
+        chunk_size = 1024
+        fps = 44100
+
+        clip = AudioFileClip(background_audio_file)
+        duration = clip.duration
+        num_chunks = int(duration * fps / chunk_size)
+
+        max_amplitude = 0
+
+        for i in range(num_chunks):
+            start = i * chunk_size / fps
+            end = (i + 1) * chunk_size / fps
+            audio_chunk = clip.subclipped(start, end).to_soundarray(fps=fps)
+
+            # Calculate maximum amplitude of this chunk
+            chunk_amplitude = np.abs(audio_chunk).max(axis=1).max()
+            max_amplitude = max(max_amplitude, chunk_amplitude)
+
+        needs = max_amplitude > threshold
+        logger().debug(
+            f"_needs_background_normalization. max_amplitude: {max_amplitude}, needs {needs}"
+        )
+        return needs, max_amplitude
+
+    except Exception as e:
+        logger().error(f"_needs_background_normalization. Error: {e}")
+        return True, 1.0
+
+    finally:
+        clip.close()
 
 
 def merge_background_and_vocals(
@@ -176,7 +215,18 @@ def merge_background_and_vocals(
 
     background = AudioSegment.from_mp3(background_audio_file)
     vocals = AudioSegment.from_mp3(dubbed_vocals_audio_file)
-    background = background.normalize()
+
+    # If background normalization is not needed, we skip it since it sometimes raises up
+    # residuals vocals not properly split in the demucs processes
+    needs, max_amplitude = _needs_background_normalization(
+        background_audio_file=background_audio_file
+    )
+    if needs:
+        logger().info(
+            f"merge_background_and_vocals. Normalizing background (max amplitude {max_amplitude:.2f})"
+        )
+        background = background.normalize()
+
     vocals = vocals.normalize()
     background = background + background_volume_adjustment
     vocals = vocals + vocals_volume_adjustment

@@ -16,13 +16,12 @@
 import os
 import tempfile
 
-from typing import Mapping
-from unittest.mock import patch
+from typing import List
+from unittest.mock import Mock, patch
 
 import pytest
 
-from pydub import AudioSegment
-
+from open_dubbing.pydub_audio_segment import AudioSegment
 from open_dubbing.text_to_speech import TextToSpeech, Voice
 
 
@@ -49,7 +48,7 @@ class TextToSpeechUT(TextToSpeech):
     ) -> str:
         pass
 
-    def get_available_voices(self, language_code: str) -> Mapping[str, str]:
+    def get_available_voices(self, language_code: str) -> List[Voice]:
         pass
 
     def get_languages(self):
@@ -58,7 +57,14 @@ class TextToSpeechUT(TextToSpeech):
 
 class TestTextToSpeech:
 
-    @pytest.mark.parametrize("end_block, expected_result", [(60, 1.5), (91, 1.0)])
+    @pytest.mark.parametrize(
+        "end_block, expected_result,",
+        [
+            (60, 1.5),  # Exact division
+            (91, 1.0),  # 0.98 -> rounded up (>0.5 change)
+            (95, 1.0),  # 0.94 -> rounded up (<0.5 change). Rounded down with round()
+        ],
+    )
     def test_calculate_target_utterance_speed(self, end_block, expected_result):
         DURATION = 90
 
@@ -75,35 +81,33 @@ class TestTextToSpeech:
                 dubbed_file=dubbed_file_path,
                 utterance_metadata="mocked",
             )
-            assert result == expected_result
+            assert expected_result == result
 
-    @pytest.mark.parametrize(
-        "input_data, expected_result",
-        [
-            ([], {}),
-            (
-                [
-                    {"speaker_id": "speaker1", "vocals_path": "path/to/file1.wav"},
-                    {"speaker_id": "speaker1", "vocals_path": "path/to/file2.wav"},
-                ],
-                {"speaker1": ["path/to/file1.wav", "path/to/file2.wav"]},
-            ),
-            (
-                [
-                    {"speaker_id": "speaker1", "vocals_path": "path/to/file1.wav"},
-                    {"speaker_id": "speaker2", "vocals_path": "path/to/file3.wav"},
-                    {"speaker_id": "speaker1", "vocals_path": "path/to/file2.wav"},
-                ],
-                {
-                    "speaker1": ["path/to/file1.wav", "path/to/file2.wav"],
-                    "speaker2": ["path/to/file3.wav"],
-                },
-            ),
-        ],
-    )
-    def test_create_speaker_to_paths_mapping(self, input_data, expected_result):
-        result = TextToSpeechUT().create_speaker_to_paths_mapping(input_data)
-        assert result == expected_result
+    def _get_dub_metadata(self):
+        return [
+            {
+                "id": 1,
+                "for_dubbing": True,
+                "assigned_voice": "en_voice",
+                "start": 0,
+                "end": 5,
+                "translated_text": "Hello world",
+                "speed": 1.0,
+                "path": "some/path/file.mp3",
+                "dubbed_path": "dubbed_file_path",
+            },
+            {
+                "id": 2,
+                "for_dubbing": True,
+                "assigned_voice": "en_voice",
+                "start": 5,
+                "end": 10,
+                "translated_text": "How are you?",
+                "speed": 1.0,
+                "path": "some/path/file.mp3",
+                "dubbed_path": "dubbed_file_path",
+            },
+        ].copy()
 
     @pytest.mark.parametrize(
         "calculated_speed, expect_adjust_called, expected_final_speed",
@@ -119,21 +123,12 @@ class TestTextToSpeech:
         tts = TextToSpeechUT()
 
         # Mock dependencies
-        utterance_metadata = [
-            {
-                "for_dubbing": True,
-                "assigned_voice": "en_voice",
-                "start": 0,
-                "end": 5,
-                "translated_text": "Hello world",
-                "speed": 1.0,  # Initially set speed to 1.0
-                "path": "some/path/file.mp3",
-            }
-        ]
-        output_directory = "/output"
-        target_language = "en"
+        utterance_metadata = self._get_dub_metadata()
+        del utterance_metadata[1]
 
-        # Mock methods
+        output_directory = "/output"
+        target_language = "eng"
+
         with patch.object(
             tts, "_does_voice_supports_speeds", return_value=False
         ), patch.object(
@@ -160,6 +155,120 @@ class TestTextToSpeech:
                 mock_adjust_speed.assert_not_called()
 
             assert result[0]["speed"] == expected_final_speed
+
+    def test_dub_utterances_modified_no_modification(self):
+        tts = TextToSpeechUT()
+
+        utterance_metadata = self._get_dub_metadata()
+        output_directory = "/output"
+        target_language = "eng"
+
+        with patch.object(
+            tts, "_does_voice_supports_speeds", return_value=False
+        ), patch.object(
+            tts, "_convert_text_to_speech", return_value="dubbed_file_path"
+        ), patch.object(
+            tts,
+            "_convert_text_to_speech_without_end_silence",
+            return_value="dubbed_file_path",
+        ), patch(
+            "open_dubbing.ffmpeg.FFmpeg.adjust_audio_speed"
+        ) as mock_adjust_speed, patch.object(
+            tts, "_calculate_target_utterance_speed", return_value=1.0
+        ):
+            result = tts.dub_utterances(
+                utterance_metadata=utterance_metadata,
+                output_directory=output_directory,
+                target_language=target_language,
+                audio_file="",
+                modified_metadata=[],
+            )
+
+            mock_adjust_speed.assert_not_called()
+            assert result == utterance_metadata
+
+    def test_dub_utterances_modified_one_modification_increase_speed(self):
+        tts = TextToSpeechUT()
+
+        utterance_metadata = self._get_dub_metadata()
+        update_metadata = self._get_dub_metadata()
+        del update_metadata[0]
+
+        output_directory = "/output"
+        target_language = "eng"
+        NEW_SPEED = 1.1
+
+        # Mock methods
+        with patch.object(
+            tts, "_does_voice_supports_speeds", return_value=False
+        ), patch.object(
+            tts, "_convert_text_to_speech", return_value="dubbed_file_path"
+        ), patch.object(
+            tts,
+            "_convert_text_to_speech_without_end_silence",
+            return_value="dubbed_file_path",
+        ), patch(
+            "open_dubbing.ffmpeg.FFmpeg.adjust_audio_speed"
+        ) as mock_adjust_speed, patch.object(
+            tts, "_calculate_target_utterance_speed", return_value=NEW_SPEED
+        ):
+            result = tts.dub_utterances(
+                utterance_metadata=utterance_metadata,
+                output_directory=output_directory,
+                target_language=target_language,
+                audio_file="",
+                modified_metadata=update_metadata,
+            )
+
+            expected_medata = update_metadata.copy()
+            expected_medata[0]["speed"] = NEW_SPEED
+            mock_adjust_speed.assert_called()
+
+            assert utterance_metadata[0] == result[0]
+            assert expected_medata[0] == result[1]
+
+    def test_dub_utterances_modified_one_modification_decrease_speed(self):
+        tts = TextToSpeechUT()
+
+        # Mock dependencies
+        utterance_metadata = self._get_dub_metadata()
+        utterance_metadata[1]["speed"] = "1.2"
+
+        update_metadata = self._get_dub_metadata()
+        del update_metadata[0]
+
+        output_directory = "/output"
+        target_language = "eng"
+        NEW_SPEED = 1.0
+
+        # Mock methods
+        with patch.object(
+            tts, "_does_voice_supports_speeds", return_value=False
+        ), patch.object(
+            tts, "_convert_text_to_speech", return_value="dubbed_file_path"
+        ), patch.object(
+            tts,
+            "_convert_text_to_speech_without_end_silence",
+            return_value="dubbed_file_path",
+        ), patch(
+            "open_dubbing.ffmpeg.FFmpeg.adjust_audio_speed"
+        ) as mock_adjust_speed, patch.object(
+            tts, "_calculate_target_utterance_speed", return_value=NEW_SPEED
+        ):
+            result = tts.dub_utterances(
+                utterance_metadata=utterance_metadata,
+                output_directory=output_directory,
+                target_language=target_language,
+                audio_file="",
+                modified_metadata=update_metadata,
+            )
+
+            expected_medata = update_metadata.copy()
+            expected_medata[0]["speed"] = NEW_SPEED
+            mock_adjust_speed.assert_not_called()
+
+            assert utterance_metadata[0] == result[0]
+            assert expected_medata[0] == result[1]
 
     @pytest.mark.parametrize(
         "test_name, utterance_metadata, expected_result",
@@ -241,7 +350,7 @@ class TestTextToSpeech:
             )
             assert result == expected_result
 
-    def test_get_voices_with_region_filter(self):
+    def test_get_voices_for_region_only(self):
         voices = [
             Voice(name="Voice1", gender="Male", region="US"),
             Voice(name="Voice2", gender="Female", region="UK"),
@@ -249,18 +358,229 @@ class TestTextToSpeech:
             Voice(name="Voice4", gender="Female", region="IN"),
         ]
 
-        result = TextToSpeechUT().get_voices_with_region_preference(
+        result = TextToSpeechUT().get_voices_for_region_only(
             voices=voices, target_language_region="UK"
         )
-        assert result[0].region == "UK"
+        assert 1 == len(result)
+        assert "UK" == result[0].region
 
-        result = TextToSpeechUT().get_voices_with_region_preference(
+        result = TextToSpeechUT().get_voices_for_region_only(
             voices=voices, target_language_region="IN"
         )
-        assert result[0].region == "IN"
-        assert result[1].region == "IN"
 
-        result = TextToSpeechUT().get_voices_with_region_preference(
+        assert 2 == len(result)
+        assert "IN" == result[0].region
+        assert "IN" == result[1].region
+
+        result = TextToSpeechUT().get_voices_for_region_only(
             voices=voices, target_language_region=""
         )
-        assert result[0].region == "US"
+        assert 4 == len(result)
+        assert "US" == result[0].region
+
+    @pytest.mark.parametrize(
+        "target_language_region, expected_voices",
+        [
+            ("IN", {1: "Voice3"}),
+            ("", {1: "Voice1"}),
+        ],
+    )
+    def test_assign_voices_single_male(self, target_language_region, expected_voices):
+        tts = TextToSpeechUT()
+
+        utterance_metadata = [
+            {
+                "speaker_id": 1,
+                "gender": "Male",
+            }
+        ]
+
+        voices = [
+            Voice(name="Voice1", gender="Male", region="US"),
+            Voice(name="Voice2", gender="Female", region="UK"),
+            Voice(name="Voice3", gender="Male", region="IN"),
+            Voice(name="Voice4", gender="Female", region="IN"),
+        ]
+
+        tts = TextToSpeechUT()
+
+        with patch.object(tts, "get_available_voices", return_value=voices):
+            results = tts.assign_voices(
+                utterance_metadata=utterance_metadata,
+                target_language="",
+                target_language_region=target_language_region,
+            )
+            assert expected_voices == results
+
+    @pytest.mark.parametrize(
+        "target_language_region, expected_voices",
+        [
+            ("IN", {1: "Voice2"}),
+            ("", {1: "Voice1"}),
+        ],
+    )
+    def test_assign_voices_single_male_no_male_voice(
+        self, target_language_region, expected_voices
+    ):
+        tts = TextToSpeechUT()
+
+        utterance_metadata = [
+            {
+                "speaker_id": 1,
+                "gender": "Male",
+            }
+        ]
+
+        voices = [
+            Voice(name="Voice1", gender="Female", region="UK"),
+            Voice(name="Voice2", gender="Female", region="IN"),
+        ]
+
+        tts = TextToSpeechUT()
+
+        with patch.object(tts, "get_available_voices", return_value=voices):
+            results = tts.assign_voices(
+                utterance_metadata=utterance_metadata,
+                target_language="",
+                target_language_region=target_language_region,
+            )
+            assert expected_voices == results
+
+    @pytest.mark.parametrize(
+        "target_language_region, expected_voices",
+        [
+            ("IN", {1: "Voice3", 2: "Voice3"}),
+            ("", {1: "Voice1", 2: "Voice3"}),
+        ],
+    )
+    def test_assign_voices_single_two_males_single_voice(
+        self, target_language_region, expected_voices
+    ):
+        tts = TextToSpeechUT()
+
+        utterance_metadata = [
+            {
+                "speaker_id": 1,
+                "gender": "Male",
+            },
+            {
+                "speaker_id": 2,
+                "gender": "Male",
+            },
+        ]
+
+        voices = [
+            Voice(name="Voice1", gender="Male", region="US"),
+            Voice(name="Voice2", gender="Female", region="US"),
+            Voice(name="Voice3", gender="Male", region="IN"),
+            Voice(name="Voice4", gender="Female", region="IN"),
+        ]
+
+        tts = TextToSpeechUT()
+
+        with patch.object(tts, "get_available_voices", return_value=voices):
+            results = tts.assign_voices(
+                utterance_metadata=utterance_metadata,
+                target_language="",
+                target_language_region=target_language_region,
+            )
+            assert expected_voices == results
+
+    @pytest.mark.parametrize(
+        "target_language_region, expected_voices",
+        [
+            ("IN", {1: "Voice3", 2: "Voice5"}),
+            ("", {1: "Voice1", 2: "Voice3"}),
+        ],
+    )
+    def test_assign_voices_single_two_males_two_voices(
+        self, target_language_region, expected_voices
+    ):
+        tts = TextToSpeechUT()
+
+        utterance_metadata = [
+            {
+                "speaker_id": 1,
+                "gender": "Male",
+            },
+            {
+                "speaker_id": 2,
+                "gender": "Male",
+            },
+        ]
+
+        voices = [
+            Voice(name="Voice1", gender="Male", region="US"),
+            Voice(name="Voice2", gender="Female", region="UK"),
+            Voice(name="Voice3", gender="Male", region="IN"),
+            Voice(name="Voice4", gender="Female", region="IN"),
+            Voice(name="Voice5", gender="Male", region="IN"),
+        ]
+
+        tts = TextToSpeechUT()
+
+        with patch.object(tts, "get_available_voices", return_value=voices):
+            results = tts.assign_voices(
+                utterance_metadata=utterance_metadata,
+                target_language="",
+                target_language_region=target_language_region,
+            )
+            assert expected_voices == results
+
+    def _get_update_utterance_metadata(self):
+        return [
+            {
+                "speaker_id": "2",
+                "start": 0,
+                "assigned_voice": "Voice0",
+                "end": 5,
+                "translated_text": "Hello world",
+                "speed": 1.0,
+                "path": "some/path/file.mp3",
+            }
+        ]
+
+    def test_update_utterance_metadata_assign_voice_from_speaker(self):
+        voices = {"1": "Voice1", "2": "Voice2"}
+
+        utterance_metadata = self._get_update_utterance_metadata()
+        tts = TextToSpeechUT()
+        updated_utterances = tts.update_utterance_metadata(
+            utterance=None,
+            utterance_metadata=utterance_metadata,
+            assigned_voices=voices,
+        )
+
+        assert "Voice2" == updated_utterances[0]["assigned_voice"]
+
+    def test_update_utterance_metadata_assign_voice_from_speaker_id(self):
+        voices = {"1": "Voice1", "2": "Voice2"}
+
+        utterance_metadata = self._get_update_utterance_metadata()
+        utterance = Mock()
+        utterance.get_modified_utterance_fields.return_value = {"speaker_id"}
+
+        tts = TextToSpeechUT()
+        updated_utterances = tts.update_utterance_metadata(
+            utterance=utterance,
+            utterance_metadata=utterance_metadata,
+            assigned_voices=voices,
+        )
+
+        assert "Voice2" == updated_utterances[0]["assigned_voice"]
+
+    def test_update_utterance_metadata_assign_voice_from_assigned_voice(self):
+        voices = {"1": "Voice1", "2": "Voice2"}
+
+        utterance_metadata = self._get_update_utterance_metadata()
+        utterance = Mock()
+        utterance.get_modified_utterance_fields.return_value = {"assigned_voice"}
+
+        tts = TextToSpeechUT()
+        updated_utterances = tts.update_utterance_metadata(
+            utterance=utterance,
+            utterance_metadata=utterance_metadata,
+            assigned_voices=voices,
+        )
+
+        assert "Voice0" == updated_utterances[0]["assigned_voice"]

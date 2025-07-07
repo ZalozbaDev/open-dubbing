@@ -13,14 +13,16 @@
 # limitations under the License.
 
 import array
-import logging
+import os
+import re
 
 from abc import ABC, abstractmethod
 from typing import Mapping, Sequence
 
 from iso639 import Lang
-from pydub import AudioSegment
 
+from open_dubbing import logger
+from open_dubbing.pydub_audio_segment import AudioSegment
 from open_dubbing.voice_gender_classifier import VoiceGenderClassifier
 
 
@@ -71,6 +73,12 @@ class SpeechToText(ABC):
     ) -> str:
         pass
 
+    # Whisper sometimes includes spaces at the begining of sentences or multiple spaces between words
+    def _make_sure_single_space(self, sentence: str) -> str:
+        fixed = re.sub(r"\s{2,}", " ", sentence)
+        fixed = fixed.strip()
+        return fixed
+
     def transcribe_audio_chunks(
         self,
         *,
@@ -79,7 +87,7 @@ class SpeechToText(ABC):
         no_dubbing_phrases: Sequence[str],
     ) -> Sequence[Mapping[str, float | str]]:
 
-        logging.debug(f"transcribe_audio_chunks: {source_language}")
+        logger().debug(f"transcribe_audio_chunks: {source_language}")
         iso_639_1 = self._get_iso_639_1(source_language)
 
         updated_utterance_metadata = []
@@ -91,7 +99,7 @@ class SpeechToText(ABC):
                 duration = item["end"] - item["start"]
                 if self._is_short_audio(duration=duration):
                     transcribed_text = ""
-                    logging.debug(
+                    logger().debug(
                         f"speech_to_text._is_short_audio. Audio is less than {self.MIN_SECS} second, skipping transcription of '{path}'."
                     )
                 else:
@@ -99,17 +107,15 @@ class SpeechToText(ABC):
                         vocals_filepath=path,
                         source_language_iso_639_1=iso_639_1,
                     )
-                    transcribed_text = (
-                        transcribed_text.strip()
-                    )  # Whisper sometimes includes spaces at the begining of sentences
+                    transcribed_text = self._make_sure_single_space(transcribed_text)
             except Exception as e:
-                logging.error(
+                logger().error(
                     f"speech_to_text.transcribe_audio_chunks. file '{path}', error: '{e}'"
                 )
                 transcribed_text = ""
 
             dubbing = len(transcribed_text) > 0
-            logging.debug(
+            logger().debug(
                 f"transcribe_audio_chunks. text: '{transcribed_text}' - dubbing: {dubbing}"
             )
             new_item["text"] = transcribed_text
@@ -139,7 +145,7 @@ class SpeechToText(ABC):
                 speakers[speaker] = speaker_data
 
         speaker_tuple = [(speaker, data["path"]) for speaker, data in speakers.items()]
-        logging.debug(
+        logger().debug(
             f"text_to_speech._get_unique_speakers_largest_audio: {speaker_tuple}"
         )
         return speaker_tuple
@@ -165,7 +171,7 @@ class SpeechToText(ABC):
             _tuple = (speaker, gender)
             r.append(_tuple)
 
-        logging.debug(f"text_to_speech.diarize_speakers. Returns: {r}")
+        logger().debug(f"text_to_speech.diarize_speakers. Returns: {r}")
         return r
 
     def add_speaker_info(
@@ -205,3 +211,17 @@ class SpeechToText(ABC):
             return True
 
         return False
+
+    def dump_transcriptions(
+        self,
+        *,
+        output_directory: str,
+        utterance_metadata: str,
+    ) -> None:
+
+        output_filename = os.path.join(output_directory, "transcription.txt")
+
+        with open(output_filename, "w") as _file:
+            for utterance in utterance_metadata:
+                text = utterance["text"]
+                _file.write(text + "\n")

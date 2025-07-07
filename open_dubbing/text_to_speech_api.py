@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import logging
 import tempfile
+import time
 
 from typing import List
 from urllib.parse import urljoin
 
 import requests
 
+from open_dubbing import logger
 from open_dubbing.text_to_speech import TextToSpeech, Voice
 
 
@@ -54,7 +55,7 @@ class TextToSpeechAPI(TextToSpeech):
             )
             voices.append(voice)
 
-        logging.debug(
+        logger().debug(
             f"text_to_speech_api.get_available_voices: {voices} for language {language_code}"
         )
 
@@ -75,23 +76,40 @@ class TextToSpeechAPI(TextToSpeech):
 
         url = urljoin(self.server, "/speak")
         url = f"{url}?voice={assigned_voice}&text={text}"
-        response = requests.get(url)
 
-        temp_filename = None
-        with tempfile.NamedTemporaryFile(delete=False) as temporary_file:
-            temp_filename = temporary_file.name
+        max_retries = 3
+        for attempt in range(1, max_retries + 1):
+            try:
+                response = requests.get(url)
 
-            if response.status_code == 200:
-                with open(temp_filename, "wb") as f:
-                    f.write(response.content)
-            else:
-                logging.error(
-                    f"Failed to download the file. Status code: {response.status_code}"
-                )
+                temp_filename = None
+                with tempfile.NamedTemporaryFile(delete=False) as temporary_file:
+                    temp_filename = temporary_file.name
 
-            self._convert_to_mp3(temp_filename, output_filename)
+                    if response.status_code == 200:
+                        with open(temp_filename, "wb") as f:
+                            f.write(response.content)
+                    else:
+                        response.raise_for_status()
 
-        logging.debug(
+                    self._convert_to_mp3(temp_filename, output_filename)
+                    break
+            except Exception:
+                if attempt == max_retries:
+                    logger().error(
+                        f"text_to_speech_api._convert_text_to_speech. Failed to download the file. Status code: {response.status_code}"
+                    )
+                    logger().error(
+                        "text_to_speech_api._convert_text_to_speech. Max retries reached. Could not complete translation API call."
+                    )
+                    raise
+                else:
+                    logger().warning(
+                        f"text_to_speech_api._convert_text_to_speech. Could not complete translation API call, retrying attempt {attempt}."
+                    )
+                    time.sleep(30)
+
+        logger().debug(
             f"text_to_speech_api._convert_text_to_speech: assigned_voice: {assigned_voice}, output_filename: '{output_filename}'"
         )
         return output_filename
@@ -103,5 +121,5 @@ class TextToSpeechAPI(TextToSpeech):
             languages.add(language)
 
         languages = sorted(list(languages))
-        logging.debug(f"text_to_speech_api.get_languages: {languages}")
+        logger().debug(f"text_to_speech_api.get_languages: {languages}")
         return languages

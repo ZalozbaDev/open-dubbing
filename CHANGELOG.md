@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.2.3]
+
+### Added
+- Allow to define a device for pyannote
+
+## [0.2.2]
+
+### Added
+- Support for Python 3.13
+
+## [0.2.1]
+
+### Fixed
+- Fixes update process encoding for macOS systems
+
+## [0.2.0]
+
+### Fixed
+- Removed pydub dependency (which is an abandoned project) and integrated necessary code
+- Fix the case when there is no voice in the video (nothing to dub)
+
+## [0.1.9]
+
+### Fixed
+- MMS TTS: handle the case when the model returns no synthetized voice
+- Several voice assignment fixes (including using voices from the same gender if available)
+- Retry mechanism TTS API call if there is an error
+
+## [0.1.8]
+
+### Added
+- Support for OpenAI TTS
+### Fixed
+- When updating an existing dubbing, use all the utterances to allow to calculate again properly speed changes.
+- Normalize audio background only when it is necessary to avoid when possible residual vocals
+
+## [0.1.7]
+
+### Fixed
+- Fix overlaps between segments due to rounding
+- Remove additional spaces between words returned sometimes by Whisper
+- Better logic to update the voices form assigned_voice and speaker_id
+
+## [0.1.6]
+
+### Added
+- Update to moviepy 2.1.1. Fixes several issues like rotations
+### Fixed
+- Small bugs in subtitles exportation
+
+## [0.1.5]
+
+### Added
+- Support for VAD filter when using fasterwhisper
+- Implemented retry when using Apertium translation API
+
 ## [0.1.4]
 
 ### Fixed

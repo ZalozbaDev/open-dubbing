@@ -35,6 +35,7 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
     ],
     packages=find_packages(),
@@ -42,7 +43,8 @@ setup(
     install_requires=parse_requirements(),
     extras_require={
         "dev": ["flake8==7.*", "black==24.*", "pytest==8.*", "isort==5.13"],
-        "coqui": ["coqui-tts == 0.24.1"],
+        "coqui": ["coqui-tts >= 0.25.1"],
+        "openai": ["openai == 1.59.3"],
     },
     entry_points={
         "console_scripts": [

@@ -15,11 +15,13 @@
 import logging
 import os
 import sys
+import warnings
 
 import transformers
 
 from iso639 import Lang
 
+from open_dubbing import logger
 from open_dubbing.command_line import CommandLine
 from open_dubbing.dubbing import Dubber
 from open_dubbing.exit_code import ExitCode
@@ -39,9 +41,12 @@ from open_dubbing.translation_sotra import TranslationSotra
 
 
 def _init_logging(log_level):
-    # Create a logger
-    logger = logging.getLogger()
-    logger.setLevel(log_level)  # Set the global log level
+    logging.basicConfig(level=logging.ERROR)  # Suppress third-party loggers
+
+    # Create your application logger
+    app_logger = logging.getLogger("open_dubbing")
+    app_logger.setLevel(log_level)
+    app_logger.propagate = False
 
     # File handler for logging to a file
     file_handler = logging.FileHandler("open_dubbing.log")
@@ -49,34 +54,32 @@ def _init_logging(log_level):
 
     # Formatter for log messages
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-
-    # Set formatter for both handlers
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
 
-    # Add handlers to the logger
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+    app_logger.addHandler(file_handler)
+    app_logger.addHandler(console_handler)
 
-    logging.getLogger("pydub.converter").setLevel(logging.ERROR)
-    logging.getLogger("speechbrain").setLevel(logging.ERROR)
     transformers.logging.set_verbosity_error()
+    warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 def log_error_and_exit(msg: str, code: ExitCode):
-    logging.error(msg)
+    logger().error(msg)
     exit(code)
 
 
-def check_languages(source_language, target_language, _tts, translation, _stt):
+def check_languages(
+    source_language, target_language, _tts, translation, _stt, target_language_region
+):
     spt = _stt.get_languages()
     translation_languages = translation.get_language_pairs()
-    logging.debug(f"check_languages. Pairs {len(translation_languages)}")
+    logger().debug(f"check_languages. Pairs {len(translation_languages)}")
 
     tts = _tts.get_languages()
 
     if source_language not in spt:
-        msg = f"source language '{source_language}' is not supported by the speech recognition system. Supported languages: '{spt}"
+        msg = f"source language '{source_language}' is not supported by the speech recognition system. Supported languages: '{spt}'"
         log_error_and_exit(msg, ExitCode.INVALID_LANGUAGE_SPT)
 
     pair = (source_language, target_language)
@@ -85,7 +88,15 @@ def check_languages(source_language, target_language, _tts, translation, _stt):
         log_error_and_exit(msg, ExitCode.INVALID_LANGUAGE_TRANS)
 
     if target_language not in tts:
-        msg = f"target language '{target_language}' is not supported by the text to speech system. Supported languages: '{tts}"
+        msg = f"target language '{target_language}' is not supported by the text to speech system. Supported languages: '{tts}'"
+        log_error_and_exit(msg, ExitCode.INVALID_LANGUAGE_TTS)
+
+    voices = _tts.get_available_voices(language_code=target_language)
+    region_voices = _tts.get_voices_for_region_only(
+        voices=voices, target_language_region=target_language_region
+    )
+    if len(region_voices) == 0:
+        msg = f"filtering by '{target_language_region}' returns no voices for language '{target_language}' in the text to speech system"
         log_error_and_exit(msg, ExitCode.INVALID_LANGUAGE_TTS)
 
 
@@ -137,7 +148,11 @@ def list_supported_languages(_tts, translation, device):  # TODO: Not used
 
 
 def _get_selected_tts(
-    selected_tts: str, tts_cli_cfg_file: str, tts_api_server: str, device: str
+    selected_tts: str,
+    tts_cli_cfg_file: str,
+    tts_api_server: str,
+    device: str,
+    openai_api_key: str,
 ):
     if selected_tts == "mms":
         tts = TextToSpeechMMS(device)
@@ -166,13 +181,20 @@ def _get_selected_tts(
         if len(tts_api_server) == 0:
             msg = "When using TTS's API, you need to specify with --tts_api_server the URL of the server"
             log_error_and_exit(msg, ExitCode.NO_TTS_API_SERVER)
+    elif selected_tts == "openai":
+        try:
+            from open_dubbing.text_to_speech_openai import TextToSpeechOpenAI
+        except Exception:
+            msg = "Make sure that OpenAI library is installed by running 'pip install open-dubbing[openai]'"
+            log_error_and_exit(msg, ExitCode.NO_OPENAI_TTS)
 
+        key = _get_openai_key(key=openai_api_key)
+        tts = TextToSpeechOpenAI(device=device, api_key=key)
     elif selected_tts == "bamborak":
         tts = TextToSpeechBamborak(device, tts_api_server)
         if len(tts_api_server) == 0:
             msg = "When using TTS's API, you need to specify with --tts_api_server the URL of the server"
             log_error_and_exit(msg, ExitCode.NO_TTS_API_SERVER)
-
     else:
         raise ValueError(f"Invalid tts value {selected_tts}")
 
@@ -207,6 +229,19 @@ def _get_selected_translator(
     return translation
 
 
+def _get_openai_key(*, key: str):
+    if key:
+        return key
+
+    VAR = "OPENAI_API_KEY"
+    key = os.getenv(VAR)
+    if key:
+        return key
+
+    msg = f"OpenAI TTS selected but no key has been pass as argument or defined in the environment variable {VAR}"
+    log_error_and_exit(msg, ExitCode.NO_OPENAI_KEY)
+
+
 def main():
 
     args = CommandLine.read_parameters()
@@ -221,7 +256,11 @@ def main():
         log_error_and_exit(msg, ExitCode.NO_FFMPEG)
 
     tts = _get_selected_tts(
-        args.tts, args.tts_cli_cfg_file, args.tts_api_server, args.device
+        args.tts,
+        args.tts_cli_cfg_file,
+        args.tts_api_server,
+        args.device,
+        args.openai_api_key,
     )
 
     if sys.platform == "darwin":
@@ -247,7 +286,7 @@ def main():
             cpu_threads=args.cpu_threads,
         )
         if args.vad:
-            logging.warning(
+            logger().warning(
                 "Vad filter is only supported in fasterwhisper Speech to Text library"
             )
 
@@ -255,13 +294,20 @@ def main():
     source_language = args.source_language
     if not source_language:
         source_language = stt.detect_language(args.input_file)
-        logging.info(f"Detected language '{source_language}'")
+        logger().info(f"Detected language '{source_language}'")
 
     translation = _get_selected_translator(
         args.translator, args.nllb_model, args.apertium_server, args.device
     )
 
-    check_languages(source_language, args.target_language, tts, translation, stt)
+    check_languages(
+        source_language,
+        args.target_language,
+        tts,
+        translation,
+        stt,
+        args.target_language_region,
+    )
 
     if not os.path.exists(args.output_directory):
         os.makedirs(args.output_directory)
@@ -284,13 +330,14 @@ def main():
         translation=translation,
         stt=stt,
         device=args.device,
+        device_pyannote=args.device_pyannote,
         cpu_threads=args.cpu_threads,
         clean_intermediate_files=args.clean_intermediate_files,
         original_subtitles=args.original_subtitles,
         dubbed_subtitles=args.dubbed_subtitles,
     )
 
-    logging.info(
+    logger().info(
         f"Processing '{args.input_file}' file with stt '{stt_text}', tts '{args.tts}' and device '{args.device}'"
     )
     if args.update:
