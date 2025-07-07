@@ -6,6 +6,8 @@ def find_texts_by_time(srt_path, metadata_list, time_tolerance=0.05):
     Given a list of subtitle metadata and an SRT file, returns the corresponding
     subtitle texts (without speaker labels), matching by start/end time with a small tolerance.
     
+    If a match is not found, prints a warning and returns an empty string in that slot.
+
     :param srt_path: Path to the .srt file
     :param metadata_list: List of dicts with 'start', 'end', 'speaker_id'
     :param time_tolerance: Time in seconds to allow as matching margin (default: 0.05s)
@@ -34,6 +36,11 @@ def find_texts_by_time(srt_path, metadata_list, time_tolerance=0.05):
                 match = clean_text
                 break
 
-        matched_texts.append(match if match is not None else "")
+        if match is None:
+            print(f"\n⚠️ WARNING: No subtitle match found for time range {target_start:.3f}–{target_end:.3f} seconds "
+                  f"(speaker {meta.get('speaker_id', 'UNKNOWN')})\n")
+            matched_texts.append("")
+        else:
+            matched_texts.append(match)
 
     return matched_texts
