@@ -59,7 +59,7 @@ def create_pyannote_timestamps(
                 for segment, _, speaker in diarization.itertracks(yield_label=True)
             ]
             return utterance_metadata
-    else
+    else:
         subs = pysrt.open(input_srt)
         utterance_metadata = []
     
