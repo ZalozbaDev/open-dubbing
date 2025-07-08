@@ -249,6 +249,7 @@ class Dubber:
         speaker_info = self.stt.predict_gender(
             file=media_file,
             utterance_metadata=utterance_metadata,
+            input_srt=self.input_srt,
         )
         self.utterance_metadata = self.stt.add_speaker_info(
             utterance_metadata=utterance_metadata, speaker_info=speaker_info
