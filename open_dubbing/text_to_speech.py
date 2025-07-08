@@ -335,13 +335,15 @@ class TextToSpeech(ABC):
 
                 logger().debug(f"support_speeds: {support_speeds}, speed: {speed}")
 
+                # only compensate for longer dubbed audio, not for shorter one
                 if speed > 1.0:
                     translated_text = utterance_copy["translated_text"]
                     logger().debug(
                         f"text_to_speech.dub_utterances. Need to increase speed for '{translated_text}'"
                     )
 
-                    MAX_SPEED = 1.3
+                    # some of our voices are really slow
+                    MAX_SPEED = 3
                     if speed > MAX_SPEED:
                         logger().debug(
                             f"text_to_speech.dub_utterances: Reduced speed from {speed} to {MAX_SPEED}"
