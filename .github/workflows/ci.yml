@@ -90,6 +90,7 @@ jobs:
         sysctl -n machdep.cpu.brand_string
         brew update
         brew install ffmpeg espeak-ng
+        brew cleanup
 
     - name: Install dependencies on Windows
       if: matrix.os == 'windows-latest'
@@ -128,6 +129,12 @@ jobs:
       with:
         name: coverage-report-${{ github.sha }}
         path: coverage.xml
+
+
+    - name: Delete dependencies to have more disk space
+      if: matrix.os == 'macos-latest'
+      run: |
+        sudo rm -rf /Applications/Xcode_*.app
 
     - name: Report test coverage
       uses: codecov/codecov-action@v5
