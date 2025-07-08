@@ -68,6 +68,26 @@ class FFmpeg:
         if os.path.exists(tmp_filename):
             os.remove(tmp_filename)
 
+    def trim_silence(self, *, filename: str):
+        tmp_filename = ""
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            tmp_filename = temp_file.name
+            shutil.copyfile(filename, tmp_filename)
+            cmd = [
+                "ffmpeg",
+                "-hide_banner",
+                "-y",
+                "-i",
+                tmp_filename,
+                "-af",
+                "silenceremove=start_periods=1:start_duration=0.1:start_threshold=-50dB:stop_periods=1:stop_duration=0.1:stop_threshold=-50dB",
+                filename,
+            ]
+            FFmpeg()._run(command=cmd, fail=False)
+
+        if os.path.exists(tmp_filename):
+            os.remove(tmp_filename)
+
     def adjust_audio_speed(self, *, filename: str, speed: float):
         tmp_filename = ""
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
