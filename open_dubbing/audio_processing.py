@@ -62,6 +62,8 @@ def create_pyannote_timestamps(
     else:
         subs = pysrt.open(input_srt)
         utterance_metadata = []
+        
+        logger().debug(f"create_pyannote_timestamps: read timestamps from {input_srt}")
     
         for sub in subs:
             match = re.match(r'\[(SPEAKER_\d+)\]:', sub.text.strip())

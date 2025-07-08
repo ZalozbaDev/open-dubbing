@@ -23,7 +23,8 @@ open-dubbing --input_file $FILENAME --source_language deu --target_language hsb 
 --hugging_face_token $HF_TOKEN --output_directory $OUTDIR \
 --translator sotra --apertium_server http://localhost:3000/translate \
 --tts bamborak --tts_api_server https://bamborakapi.mudrowak.de/api/tts/ \
---dubbed_subtitles --original_subtitles --log_level DEBUG --input_srt $SUBSFILE
+--dubbed_subtitles --original_subtitles --log_level DEBUG --input_srt $SUBSFILE \
+--device cpu
 
 
 

@@ -80,7 +80,7 @@ class SpeechToText(ABC):
         fixed = fixed.strip()
         return fixed
 
-    def _srt_time_to_seconds(t):
+    def _srt_time_to_seconds(self, t):
         return t.hours * 3600 + t.minutes * 60 + t.seconds + t.milliseconds / 1000.0
 
     def transcribe_audio_chunks(
@@ -96,6 +96,7 @@ class SpeechToText(ABC):
         iso_639_1 = self._get_iso_639_1(source_language)
 
         if input_srt:
+            logger().debug(f"transcribe_audio_chunks: read transcripts from from {input_srt}")
             subs = pysrt.open(input_srt)
 
         updated_utterance_metadata = []
@@ -118,8 +119,8 @@ class SpeechToText(ABC):
                         )
                         transcribed_text = self._make_sure_single_space(transcribed_text)
                 else:
-                    matched_texts = []
                     match = None
+                    time_tolerance=0.05
                     for sub in subs:
                         target_start = item["start"]
                         target_end = item["end"]
@@ -137,10 +138,9 @@ class SpeechToText(ABC):
                     if match is None:
                         print(f"\n⚠️ WARNING: No subtitle match found for time range {target_start:.3f}–{target_end:.3f} seconds "
                               f"(speaker {meta.get('speaker_id', 'UNKNOWN')})\n")
-                        matched_texts.append("")
+                        transcribed_text = self._make_sure_single_space("")
                     else:
-                        matched_texts.append(match)
-                    transcribed_text = self._make_sure_single_space(matched_texts)
+                        transcribed_text = self._make_sure_single_space(match)
             except Exception as e:
                 logger().error(
                     f"speech_to_text.transcribe_audio_chunks. file '{path}', error: '{e}'"
