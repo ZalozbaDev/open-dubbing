@@ -71,7 +71,7 @@ class TextToSpeechBamborak(TextToSpeech):
         voices.append(voice)
 
         voice = Voice(
-            name="katka_fine_2025_06_10",
+            name="katka_2025_07",
             gender="female",
             region="lusatia",
         )
