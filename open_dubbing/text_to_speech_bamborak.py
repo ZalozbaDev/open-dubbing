@@ -115,7 +115,8 @@ class TextToSpeechBamborak(TextToSpeech):
                 )
 
             self._convert_to_mp3(temp_filename, output_filename)
-            FFmpeg().trim_silence(filename=output_filename)
+            # need to do better than this
+            # FFmpeg().trim_silence(filename=output_filename)
 
         logging.debug(
             f"text_to_speech_api._convert_text_to_speech: assigned_voice: {assigned_voice}, output_filename: '{output_filename}'"
