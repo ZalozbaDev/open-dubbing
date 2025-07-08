@@ -213,7 +213,7 @@ class Dubber:
             audio_file=audio_file,
             pipeline=self.pyannote_pipeline,
             device=device_pyannote,
-            input_srt=input_srt,
+            input_srt=self.input_srt,
         )
         utterance_metadata = audio_processing.run_cut_and_save_audio(
             utterance_metadata=utterance_metadata,
@@ -244,7 +244,7 @@ class Dubber:
             utterance_metadata=self.utterance_metadata,
             source_language=self.source_language,
             no_dubbing_phrases=[],
-            input_srt=input_srt,
+            input_srt=self.input_srt,
         )
         speaker_info = self.stt.predict_gender(
             file=media_file,
