@@ -1,6 +1,17 @@
 import pysrt
 import re
 from datetime import timedelta
+import sys
+
+# Check if exactly 2 arguments are provided (excluding the script name)
+if len(sys.argv) != 3:
+    print("Usage: python srt_color_to_speakerids.py <input_srt> <output_srt>")
+    sys.exit(1)
+
+# Get arguments
+input_srt = sys.argv[1]
+output_srt = sys.argv[2]
+
 
 # Pattern to extract font color and text
 FONT_TAG_RE = re.compile(r'<font color="(#\w{6})">(.*?)</font>', re.DOTALL)
@@ -84,4 +95,4 @@ def process_srt(input_path, output_path):
     srt_file.save(output_path, encoding='utf-8')
 
 # Example usage
-process_srt('../../kick_it/kick_it.srt', './kick_proc.srt')
+process_srt(input_srt, output_srt)
