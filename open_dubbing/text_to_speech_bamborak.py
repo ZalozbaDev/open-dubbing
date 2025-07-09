@@ -117,7 +117,7 @@ class TextToSpeechBamborak(TextToSpeech):
             
             temp_filename_wav = temp_filename + '.wav';
             FFmpeg().convert_to_format(source=temp_filename,target=temp_filename_wav)
-            sox.trim_silence(temp_filename_wav)
+            sox().trim_silence(filename=temp_filename_wav)
             self._convert_to_mp3(temp_filename_wav, output_filename)
 
         logging.debug(
