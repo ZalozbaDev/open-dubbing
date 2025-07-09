@@ -121,19 +121,21 @@ class SpeechToText(ABC):
                 else:
                     match = None
                     time_tolerance=0.05
+                    near_zero = 0.00001
                     for sub in subs:
                         target_start = item["start"]
                         target_end = item["end"]
                         sub_start = self._srt_time_to_seconds(sub.start)
                         sub_end = self._srt_time_to_seconds(sub.end)
             
-                        if (abs(sub_start - target_start) <= time_tolerance and
-                            abs(sub_end - target_end) <= time_tolerance):
-            
-                            # Remove the [SPEAKER_XX]: tag
-                            clean_text = re.sub(r'^\[SPEAKER_\d{2}\]:\s*', '', sub.text.strip())
-                            match = clean_text
-                            break
+                        if (sub_start > near_zero) and (sub_end > near_zero):
+                            if (abs(sub_start - target_start) <= time_tolerance and
+                                abs(sub_end - target_end) <= time_tolerance):
+                
+                                # Remove the [SPEAKER_XX]: tag
+                                clean_text = re.sub(r'^\[SPEAKER_\d{2}\]:\s*', '', sub.text.strip())
+                                match = clean_text
+                                break
             
                     if match is None:
                         print(f"\n⚠️ WARNING: No subtitle match found for time range {target_start:.3f}–{target_end:.3f} seconds "
@@ -209,7 +211,7 @@ class SpeechToText(ABC):
                 sub_end = self._srt_time_to_seconds(sub.end)
                 if (sub_start < near_zero) and (sub_end < near_zero):
                     # [SPEAKER_XY]: name, gender
-                    match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", line)
+                    match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
                     if match:
                         speaker_id = match.group(1)
                         name = match.group(2)

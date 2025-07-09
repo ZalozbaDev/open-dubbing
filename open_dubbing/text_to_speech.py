@@ -14,6 +14,8 @@
 
 import math
 import os
+import pysrt
+import re
 
 from abc import ABC, abstractmethod
 from typing import Final, List, Mapping, NamedTuple, Sequence
@@ -55,18 +57,26 @@ class TextToSpeech(ABC):
 
         return voices_copy
 
+    def _srt_time_to_seconds(self, t):
+        return t.hours * 3600 + t.minutes * 60 + t.seconds + t.milliseconds / 1000.0
+
     def assign_voices(
         self,
         *,
         utterance_metadata: Sequence[Mapping[str, str | float]],
         target_language: str,
         target_language_region: str,
+        input_srt: str | None = None,
     ) -> Mapping[str, str | None]:
 
         voices = self.get_available_voices(target_language)
         region_voices = self.get_voices_for_region_only(
             voices=voices, target_language_region=target_language_region
         )
+
+        if input_srt:
+            logger().debug(f"assign_voices: read transcripts from from {input_srt}")
+            subs = pysrt.open(input_srt)
 
         voice_assignment = {}
         used_voices = set()
@@ -75,28 +85,46 @@ class TextToSpeech(ABC):
             if speaker_id in voice_assignment:
                 continue
 
-            gender = chunk["gender"]
-            for voice in region_voices:  # Try to use an unused voice of the same gender
-                if (
-                    voice.name not in used_voices
-                    and voice.gender.lower() == gender.lower()
-                ):
-                    voice_assignment[speaker_id] = voice.name
-                    used_voices.add(voice.name)
-                    break
+            if not input_srt:
+                gender = chunk["gender"]
+                for voice in region_voices:  # Try to use an unused voice of the same gender
+                    if (
+                        voice.name not in used_voices
+                        and voice.gender.lower() == gender.lower()
+                    ):
+                        voice_assignment[speaker_id] = voice.name
+                        used_voices.add(voice.name)
+                        break
+                else:
+                    for (
+                        voice
+                    ) in region_voices:  # Try to use an already used voice of same gender
+                        if voice.gender.lower() == gender.lower():
+                            voice_assignment[speaker_id] = voice.name
+                            used_voices.add(voice.name)
+                            break
+                    else:  # Try to use any other voice of any gender even if it used
+                        for voice in region_voices:
+                            voice_assignment[speaker_id] = voice.name
+                            used_voices.add(voice.name)
+                            break
             else:
-                for (
-                    voice
-                ) in region_voices:  # Try to use an already used voice of same gender
-                    if voice.gender.lower() == gender.lower():
-                        voice_assignment[speaker_id] = voice.name
-                        used_voices.add(voice.name)
-                        break
-                else:  # Try to use any other voice of any gender even if it used
-                    for voice in region_voices:
-                        voice_assignment[speaker_id] = voice.name
-                        used_voices.add(voice.name)
-                        break
+                near_zero = 0.00001
+                for sub in subs:
+                    sub_start = self._srt_time_to_seconds(sub.start)
+                    sub_end = self._srt_time_to_seconds(sub.end)
+                    if (sub_start < near_zero) and (sub_end < near_zero):
+                        # [SPEAKER_XY]: name, gender
+                        match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
+                        if match:
+                            speaker_id = match.group(1)
+                            name = match.group(2)
+                            gender = match.group(3)
+                            
+                            voice_assignment[speaker_id] = name
+                            used_voices.add(name)
+                        else:
+                            logger().error(f"Could not parse {sub.text} for speaker name and gender")
 
         logger().info(f"text_to_speech.assign_voices. Returns: {voice_assignment}")
         return voice_assignment

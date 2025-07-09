@@ -280,6 +280,7 @@ class Dubber:
             utterance_metadata=self.utterance_metadata,
             target_language=self.target_language,
             target_language_region=self.target_language_region,
+            input_srt=self.input_srt,
         )
         self.utterance_metadata = self.tts.update_utterance_metadata(
             utterance_metadata=self.utterance_metadata,

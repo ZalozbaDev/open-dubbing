@@ -62,6 +62,7 @@ def create_pyannote_timestamps(
     else:
         subs = pysrt.open(input_srt)
         utterance_metadata = []
+        near_zero = 0.00001
         
         logger().debug(f"create_pyannote_timestamps: read timestamps from {input_srt}")
     
@@ -81,11 +82,12 @@ def create_pyannote_timestamps(
                     sub.end.seconds +
                     sub.end.milliseconds / 1000
                 )
-                utterance_metadata.append({
-                    "start": round(start_seconds, 3),
-                    "end": round(end_seconds, 3),
-                    "speaker_id": speaker_id
-                })
+                if (start_seconds > near_zero) and (end_seconds > near_zero):
+                    utterance_metadata.append({
+                        "start": round(start_seconds, 3),
+                        "end": round(end_seconds, 3),
+                        "speaker_id": speaker_id
+                    })
     
         return utterance_metadata
 

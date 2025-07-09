@@ -23,6 +23,7 @@ import json
 
 from open_dubbing.text_to_speech import TextToSpeech, Voice
 from open_dubbing.ffmpeg import FFmpeg
+from open_dubbing.sox import sox
 
 
 class TextToSpeechBamborak(TextToSpeech):
@@ -113,10 +114,11 @@ class TextToSpeechBamborak(TextToSpeech):
                 logging.error(
                     f"Failed to download the file. Status code: {response.status_code}"
                 )
-
-            self._convert_to_mp3(temp_filename, output_filename)
-            # need to do better than this
-            # FFmpeg().trim_silence(filename=output_filename)
+            
+            temp_filename_wav = temp_filename + '.wav';
+            FFmpeg().convert_to_format(source=temp_filename,target=temp_filename_wav)
+            sox.trim_silence(temp_filename_wav)
+            self._convert_to_mp3(temp_filename_wav, output_filename)
 
         logging.debug(
             f"text_to_speech_api._convert_text_to_speech: assigned_voice: {assigned_voice}, output_filename: '{output_filename}'"
