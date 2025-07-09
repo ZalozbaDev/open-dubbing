@@ -29,13 +29,13 @@ def classify_speakers(srt_file):
     for speaker, count in sorted(speaker_counts.items(), key=lambda x: -x[1]):
         print(f"{speaker}: {count}")
 
-    print("\nTop 3 conversation partners per speaker:")
+    print("\nTop conversation partners (≥5 turns) per speaker:")
     top_conversation_partners(dialogue_sequence)
 
 def top_conversation_partners(dialogue_sequence):
     interaction_counts = defaultdict(Counter)
 
-    # Analyze adjacent speaker pairs
+    # Track interactions based on speaker changes
     for i in range(1, len(dialogue_sequence)):
         prev_speaker = dialogue_sequence[i - 1]
         curr_speaker = dialogue_sequence[i]
@@ -44,7 +44,13 @@ def top_conversation_partners(dialogue_sequence):
             interaction_counts[curr_speaker][prev_speaker] += 1
 
     for speaker, partners in interaction_counts.items():
-        top_3 = partners.most_common(3)
+        # Filter out interactions with fewer than 5 turns
+        filtered_partners = [(p, c) for p, c in partners.items() if c >= 5]
+        if not filtered_partners:
+            continue  # Skip this speaker
+
+        # Sort and take top 3
+        top_3 = sorted(filtered_partners, key=lambda x: -x[1])[:3]
         print(f"{speaker}: {[f'{p} ({c})' for p, c in top_3]}")
 
 if __name__ == "__main__":
