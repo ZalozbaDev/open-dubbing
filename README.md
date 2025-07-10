@@ -14,7 +14,7 @@ It combines this project, https://github.com/Softcatala/subdub-editor (an editor
 
 # Features
 
-* Build on top of open source models and able to run it locally
+* Built on top of open source models and able to run it locally
 * Dubs automatically a video from a source to a target language
 * Supports multiple Text To Speech (TTS): Coqui, MMS, Edge, OpenAI TTS
  * Allows to use any non-supported one by configuring an API or CLI
@@ -71,7 +71,7 @@ If you want to install also Coqui-tts, do:
 pip install open_dubbing[coqui]
 ```
 
-If you want to install also OpenIA support, do:
+If you want to install also OpenAI support, do:
 
 ```shell
 pip install open_dubbing[openai]
@@ -182,7 +182,7 @@ For more detailed documentation on how the tool works and how to use it, see our
 # Appreciation
 
 Core libraries used:
-* [demucs](https://github.com/facebookresearch/demucs) to separate vocals from the audio
+* [demucs](https://github.com/adefossez/demucs) to separate vocals from the audio
 * [pyannote-audio](https://github.com/pyannote/pyannote-audio) to diarize speakers
 * [faster-whisper](https://github.com/SYSTRAN/faster-whisper) for audio to speech
 * [NLLB-200](https://github.com/facebookresearch/fairseq/tree/nllb) for machine translation
