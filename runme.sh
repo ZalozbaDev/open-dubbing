@@ -45,12 +45,15 @@ echo "Subtitles=$SUBSFILE"
 echo "HF_TOKEN=$HF_TOKEN"
 echo "Output=$OUTDIR"
 
+# enable if updating only!
+# export UPDATE="--update"
+
 open-dubbing --input_file $FILENAME --source_language deu --target_language hsb \
 --hugging_face_token $HF_TOKEN --output_directory $OUTDIR \
 --translator sotra --apertium_server $SOTRA_URL \
 --tts bamborak --tts_api_server $BAMBORAK_BACKEND \
 --dubbed_subtitles --original_subtitles --log_level DEBUG --input_srt $SUBSFILE \
---device cpu
+--device cpu $UPDATE
 
 
 
