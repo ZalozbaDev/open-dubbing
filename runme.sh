@@ -17,6 +17,16 @@
 #######################
 
 
+##### format for specifying speakers
+#
+# 1
+# 00:00:00,000 --> 00:00:00,000
+# [SPEAKER_01]: cyril,Male
+# 
+
+
+
+
 # you need a running "sotra_lmu_fairseq" container, and specify it's "translate" endpoint below
 # you need a running "bamborak" backend and specify its API endpoint like below
 
