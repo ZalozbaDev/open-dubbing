@@ -268,12 +268,14 @@ class Dubber:
             if self.preprocessing_output.video_file
             else self.preprocessing_output.audio_file
         )
+        """Passing the .srt is ok here because the timing info and text will be read."""
         utterance_metadata = self.stt.transcribe_audio_chunks(
             utterance_metadata=self.utterance_metadata,
             source_language=self.source_language,
             no_dubbing_phrases=[],
-            speaker_list=self.speaker_list,
+            input_srt=self.input_srt,
         )
+        """Gender prediction can be done with speaker list."""
         speaker_info = self.stt.predict_gender(
             file=media_file,
             utterance_metadata=utterance_metadata,

@@ -74,10 +74,6 @@ class TextToSpeech(ABC):
             voices=voices, target_language_region=target_language_region
         )
 
-        if input_srt:
-            logger().debug(f"assign_voices: read transcripts from from {input_srt}")
-            subs = pysrt.open(input_srt)
-
         voice_assignment = {}
         used_voices = set()
         for chunk in utterance_metadata:
@@ -85,7 +81,7 @@ class TextToSpeech(ABC):
             if speaker_id in voice_assignment:
                 continue
 
-            if not input_srt:
+            if not speaker_list.is_valid():
                 gender = chunk["gender"]
                 for voice in region_voices:  # Try to use an unused voice of the same gender
                     if (
@@ -109,22 +105,12 @@ class TextToSpeech(ABC):
                             used_voices.add(voice.name)
                             break
             else:
-                near_zero = 0.00001
-                for sub in subs:
-                    sub_start = self._srt_time_to_seconds(sub.start)
-                    sub_end = self._srt_time_to_seconds(sub.end)
-                    if (sub_start < near_zero) and (sub_end < near_zero):
-                        # [SPEAKER_XY]: name, gender
-                        match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
-                        if match:
-                            speaker_id = match.group(1)
-                            name = match.group(2)
-                            gender = match.group(3)
-                            
-                            voice_assignment[speaker_id] = name
-                            used_voices.add(name)
-                        else:
-                            logger().error(f"Could not parse {sub.text} for speaker name and gender")
+            	logger().debug(f"assign_voices: read voices from assembled list")
+            	for s in speaker_list.speakers:
+            		speaker_id = s.speaker_id
+            		name       = s.name
+                    voice_assignment[speaker_id] = name
+                    used_voices.add(name)
 
         logger().info(f"text_to_speech.assign_voices. Returns: {voice_assignment}")
         return voice_assignment

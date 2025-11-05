@@ -15,6 +15,7 @@
 import array
 import os
 import re
+import pysrt
 
 from abc import ABC, abstractmethod
 from typing import Mapping, Sequence
@@ -89,7 +90,7 @@ class SpeechToText(ABC):
         utterance_metadata: Sequence[Mapping[str, float | str]],
         source_language: str,
         no_dubbing_phrases: Sequence[str],
-        speaker_list: SpeakerList,
+        input_srt: str | None = None,
     ) -> Sequence[Mapping[str, float | str]]:
 
         logger().debug(f"transcribe_audio_chunks: {source_language}")
@@ -195,7 +196,7 @@ class SpeechToText(ABC):
 
         speaker_gender = {}
         
-        if not input_srt:
+        if not speaker_list.is_valid():
             classifier = VoiceGenderClassifier(self.device)
             speakers = self._get_unique_speakers_largest_audio(utterance_metadata)
             for speaker, path in speakers:
@@ -203,23 +204,11 @@ class SpeechToText(ABC):
                 speaker_gender[speaker] = gender
     
         else:
-            logger().debug(f"predict_gender: read annotations from {input_srt}")
-            subs = pysrt.open(input_srt)
-            near_zero = 0.00001
-            for sub in subs:
-                sub_start = self._srt_time_to_seconds(sub.start)
-                sub_end = self._srt_time_to_seconds(sub.end)
-                if (sub_start < near_zero) and (sub_end < near_zero):
-                    # [SPEAKER_XY]: name, gender
-                    match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
-                    if match:
-                        speaker_id = match.group(1)
-                        name = match.group(2)
-                        gender = match.group(3)
-                        
-                        speaker_gender[speaker_id] = gender
-                    else:
-                        logger().error(f"Could not parse {sub.text} for speaker name and gender")
+            logger().debug(f"predict_gender: read annotations from assembled list")
+            for s in speaker_list.speakers:
+            	speaker_id = s.speaker_id
+            	gender     = s.gender
+                speaker_gender[speaker_id] = gender
                     
         r = []
         for chunk in utterance_metadata:
