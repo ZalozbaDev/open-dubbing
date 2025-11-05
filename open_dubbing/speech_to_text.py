@@ -15,7 +15,6 @@
 import array
 import os
 import re
-import pysrt
 
 from abc import ABC, abstractmethod
 from typing import Mapping, Sequence
@@ -25,6 +24,7 @@ from iso639 import Lang
 from open_dubbing import logger
 from open_dubbing.pydub_audio_segment import AudioSegment
 from open_dubbing.voice_gender_classifier import VoiceGenderClassifier
+from open_dubbing.speaker_list import SpeakerList
 
 
 class SpeechToText(ABC):
@@ -89,7 +89,7 @@ class SpeechToText(ABC):
         utterance_metadata: Sequence[Mapping[str, float | str]],
         source_language: str,
         no_dubbing_phrases: Sequence[str],
-        input_srt: str | None = None,
+        speaker_list: SpeakerList,
     ) -> Sequence[Mapping[str, float | str]]:
 
         logger().debug(f"transcribe_audio_chunks: {source_language}")
@@ -190,7 +190,7 @@ class SpeechToText(ABC):
         *,
         file: str,
         utterance_metadata: Sequence[Mapping[str, str | float]],
-        input_srt: str | None = None,
+        speaker_list: SpeakerList,
     ) -> Sequence[tuple[str, str]]:
 
         speaker_gender = {}

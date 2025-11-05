@@ -14,7 +14,6 @@
 
 import math
 import os
-import pysrt
 import re
 
 from abc import ABC, abstractmethod
@@ -24,6 +23,7 @@ from open_dubbing import logger
 from open_dubbing.ffmpeg import FFmpeg
 from open_dubbing.pydub_audio_segment import AudioSegment
 from open_dubbing.utterance import Utterance
+from open_dubbing.speaker_list import SpeakerList
 
 
 class Voice(NamedTuple):
@@ -66,7 +66,7 @@ class TextToSpeech(ABC):
         utterance_metadata: Sequence[Mapping[str, str | float]],
         target_language: str,
         target_language_region: str,
-        input_srt: str | None = None,
+        speaker_list: SpeakerList,
     ) -> Mapping[str, str | None]:
 
         voices = self.get_available_voices(target_language)
