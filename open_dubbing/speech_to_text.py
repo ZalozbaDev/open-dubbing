@@ -97,7 +97,7 @@ class SpeechToText(ABC):
         iso_639_1 = self._get_iso_639_1(source_language)
 
         if input_srt:
-            logger().debug(f"transcribe_audio_chunks: read transcripts from from {input_srt}")
+            logger().debug(f"transcribe_audio_chunks: read transcripts from {input_srt}")
             subs = pysrt.open(input_srt)
 
         updated_utterance_metadata = []
@@ -133,9 +133,11 @@ class SpeechToText(ABC):
                             if (abs(sub_start - target_start) <= time_tolerance and
                                 abs(sub_end - target_end) <= time_tolerance):
                 
-                                # Remove the [SPEAKER_XX]: tag
-                                clean_text = re.sub(r'^\[SPEAKER_\d{2}\]:\s*', '', sub.text.strip())
-                                match = clean_text
+                                subtitle_text = sub.text.strip()
+                                if re.match(r'^\[SPEAKER_\d{2}\]:\s*', subtitle_text):  # If the annotation exists
+                                    # Remove the [SPEAKER_XX]: tag
+                                    subtitle_text = re.sub(r'^\[SPEAKER_\d{2}\]:\s*', '', subtitle_text)
+                                match = subtitle_text
                                 break
             
                     if match is None:

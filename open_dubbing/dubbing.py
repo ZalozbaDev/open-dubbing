@@ -198,6 +198,9 @@ class Dubber:
             )
         logger().debug("Access to PyAnnote from HuggingFace verified.")
 
+    def _srt_time_to_seconds(self, t):
+        return t.hours * 3600 + t.minutes * 60 + t.seconds + t.milliseconds / 1000.0
+
     def run_preprocessing(self) -> None:
         """Splits audio/video, applies DEMUCS, and segments audio into utterances with PyAnnote."""
         if self.input_srt:

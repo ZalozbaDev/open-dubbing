@@ -88,6 +88,15 @@ def create_pyannote_timestamps(
                         "end": round(end_seconds, 3),
                         "speaker_id": speaker_id
                     })
+            else:
+                logger().debug(f"create_pyannote_timestamps: assignment failed (speaker annotation missing in .srt)")
+                utterance_metadata = []
+                break
+
+        # fallback if .srt parsing fails
+        if not utterance_metadata:
+            logger().error(f"Fatal error!")
+            exit(200)
     
         return utterance_metadata
 

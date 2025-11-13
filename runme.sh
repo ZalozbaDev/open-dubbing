@@ -50,8 +50,8 @@ echo "Output=$OUTDIR"
 # enable if updating only!
 # export UPDATE="--update"
 
-# DEVICE="cpu"
-DEVICE="cuda"
+DEVICE="cpu"
+# DEVICE="cuda"
 
 if [ "$#" -gt 3 ]; then
 	export SUBSFILE=$4
@@ -75,7 +75,20 @@ else
 	
 fi
 
+# Testing
 
+# 1.: no .srt at all
+## rm -rf test4recniki/ && ./runme.sh ~/uploader-recny-model/test/dubbing/4recniki.mp4 HF_TOKEN test4recniki/ 
+##
+## this shall work and return everything automatically processed
+
+# 2.: with .srt but no speaker info
+## rm -rf test4recniki/ && ./runme.sh ~/uploader-recny-model/test/dubbing/4recniki.mp4 HF_TOKEN test4recniki/ ~/uploader-recny-model/test/dubbing/4_recniki.de.srt
+##
+## this shall fail (not yet supported scenario)
+
+# 3.: with .srt that contains speaker info but no speaker assignments
+## rm -rf test4recniki/ && ./runme.sh ~/uploader-recny-model/test/dubbing/4recniki.mp4 HF_TOKEN test4recniki/ 
 
 
 
