@@ -30,6 +30,26 @@
 # for timbres with (*):
 # emotions: neutral happy excited sad angry frightened screaming whispering 
 
+# nice combinations/suggestions:
+
+# male:
+#
+# korla2+daniel+X
+# katka_2025_07+daniel+X
+# korla2+jan
+# katka_2025_07+jan
+# korla2+michal_multi_2025_02_20
+# katka_2025_07+michal_multi_2025_02_20
+
+
+# female:
+#
+# katka_2025_07+katka_2025_07+X
+# weronika+katka_2025_07+X
+# katka_2025_07+multi_2025_02_11
+# weronika+multi_2025_02_11
+# weronika
+
 
 # you need a running "sotra_lmu_fairseq" container, and specify it's "translate" endpoint below
 # you need a running "bamborak" backend and specify its API endpoint like below
