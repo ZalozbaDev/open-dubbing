@@ -221,11 +221,11 @@ class Dubber:
                         logger().error(f"Could not parse {sub.text} for speaker name and gender")
         
         if self.speaker_list.is_valid():
-            logger().debug("Successfuly read these speakers from .srt")
+            logger().debug("Successfuly read these speaker assignments from .srt")
             for s in self.speaker_list.speakers:
                 print(f"{s.speaker_id}: {s.name} ({s.gender})")
         else:
-            logger().debug("No speakers in .srt (resp no .srt at all)")
+            logger().debug("No speaker assignments in .srt (resp no .srt at all)")
         
         video_file, audio_file = VideoProcessing.split_audio_video(
             video_file=self.input_file, output_directory=self.output_directory
