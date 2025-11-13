@@ -316,7 +316,13 @@ def main():
     retval = translation._translate_text("deu","hsb","Witajće k nam lubi ludźo!");
     print("Translation test: " + retval); 
     dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika",target_language="hsb",output_filename="testvoice.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
-    print("TTS test:");
+    print("TTS test 1 - normal voice:");
+    print(dubbed_file);
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel",target_language="hsb",output_filename="testvoice2.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
+    print("TTS test 2 - changed voice:");
+    print(dubbed_file);
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel+screaming",target_language="hsb",output_filename="testvoice3.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
+    print("TTS test 3 - changed voice with emotion:");
     print(dubbed_file);
 
     dubber = Dubber(

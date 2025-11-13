@@ -21,6 +21,7 @@ from urllib.parse import urljoin
 import requests
 import json
 
+from open_dubbing import logger
 from open_dubbing.text_to_speech import TextToSpeech, Voice
 from open_dubbing.ffmpeg import FFmpeg
 from open_dubbing.sox import sox
@@ -98,9 +99,22 @@ class TextToSpeechBamborak(TextToSpeech):
         speed: float,
     ) -> str:
 
-        payload = {'text':text,'speaker_id':assigned_voice}
+        voice_parts = assigned_voice.split('+')
+        
+        voice_name = voice_parts[0]
+        payload = {'text':text,'speaker_id':voice_name}
+        
+        if len(voice_parts) >= 2:
+            voice_timbre = voice_parts[1]
+            payload = {'text':text,'speaker_id':voice_name,'timbre_id':voice_timbre}
+            
+        if len(voice_parts) >= 3:
+            voice_emotion = voice_parts[2]
+            payload = {'text':text,'speaker_id':voice_name,'timbre_id':voice_timbre,'emotion':voice_emotion}
+
         headers = {'Content-Type':'application/json'}
 
+        logger().debug(payload)
         response = requests.post(self.server, headers=headers, data=json.dumps(payload))
 
         temp_filename = None
@@ -111,7 +125,7 @@ class TextToSpeechBamborak(TextToSpeech):
                 with open(temp_filename, "wb") as f:
                     f.write(response.content)
             else:
-                logging.error(
+                logger().error(
                     f"Failed to download the file. Status code: {response.status_code}"
                 )
             
@@ -120,7 +134,7 @@ class TextToSpeechBamborak(TextToSpeech):
             sox().trim_silence(filename=temp_filename_wav)
             self._convert_to_mp3(temp_filename_wav, output_filename)
 
-        logging.debug(
+        logger().debug(
             f"text_to_speech_api._convert_text_to_speech: assigned_voice: {assigned_voice}, output_filename: '{output_filename}'"
         )
         return output_filename
@@ -130,5 +144,5 @@ class TextToSpeechBamborak(TextToSpeech):
         languages.add("hsb")
 
         languages = sorted(list(languages))
-        logging.debug(f"text_to_speech_api.get_languages: {languages}")
+        logger().debug(f"text_to_speech_api.get_languages: {languages}")
         return languages
