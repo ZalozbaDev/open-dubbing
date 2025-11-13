@@ -116,7 +116,7 @@ fi
 ##
 ## this shall work and create a result as expected
 
-# 4.: with .srt that contains speaker info but no speaker assignments
+# 4.: with .srt that contains speaker info and speaker assignments
 ## rm -rf test4recniki/ && ./runme.sh ~/uploader-recny-model/test/dubbing/4recniki.mp4 HF_TOKEN test4recniki/ ~/uploader-recny-model/test/dubbing/4_recniki.de.speakers.assigned.srt
 ##
 ## this shall work and create a result as expected
