@@ -324,6 +324,9 @@ def main():
     dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel+screaming",target_language="hsb",output_filename="testvoice3.mp3",text="Prošu jara, tule je twój wuslědk. Za tutu wariantu dyrbi zwuk dlěše być, hewak ta synteza njeńdźe. To je poprawom škoda, ale ničo njepomha.", speed=0)
     print("TTS test 3 - changed voice with emotion:");
     print(dubbed_file);
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+katka_2025_07+sad",target_language="hsb",output_filename="testvoice4.mp3",text="Haj.", speed=0)
+    print("TTS test 4 - changed voice with emotion, short audio:");
+    print(dubbed_file);
 
     dubber = Dubber(
         input_file=args.input_file,
