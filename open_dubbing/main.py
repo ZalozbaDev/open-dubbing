@@ -318,10 +318,10 @@ def main():
     dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika",target_language="hsb",output_filename="testvoice.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
     print("TTS test 1 - normal voice:");
     print(dubbed_file);
-    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel",target_language="hsb",output_filename="testvoice2.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel",target_language="hsb",output_filename="testvoice2.mp3",text="Prošu jara, tule je twój wuslědk. Za tutu wariantu dyrbi zwuk dlěše być, hewak ta synteza njeńdźe. To je poprawom škoda, ale ničo njepomha.", speed=0)
     print("TTS test 2 - changed voice:");
     print(dubbed_file);
-    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel+screaming",target_language="hsb",output_filename="testvoice3.mp3",text="Prošu jara, tule je twój wuslědk.", speed=0)
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+daniel+screaming",target_language="hsb",output_filename="testvoice3.mp3",text="Prošu jara, tule je twój wuslědk. Za tutu wariantu dyrbi zwuk dlěše być, hewak ta synteza njeńdźe. To je poprawom škoda, ale ničo njepomha.", speed=0)
     print("TTS test 3 - changed voice with emotion:");
     print(dubbed_file);
 
