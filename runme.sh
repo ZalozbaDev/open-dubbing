@@ -24,7 +24,11 @@
 # [SPEAKER_01]: cyril,Male
 # 
 
+# voice names: weronika korla multi_2025_02_11/VCTK_old_16 michal_multi_2025_02_20 arnd_multi_2025_02_21 katka_2025_07    korla2 cyril
+# timbres:     weronika korla multi_2025_02_11             michal_multi_2025_02_20 arnd_multi_2025_02_21 katka_2025_07(*) korla2 cyril daniel(*) jan
 
+# for timbres with (*):
+# emotions: neutral happy excited sad angry frightened screaming whispering 
 
 
 # you need a running "sotra_lmu_fairseq" container, and specify it's "translate" endpoint below
