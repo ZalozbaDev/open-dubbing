@@ -105,10 +105,10 @@ class TextToSpeech(ABC):
                             used_voices.add(voice.name)
                             break
             else:
-            	logger().debug(f"assign_voices: read voices from assembled list")
-            	for s in speaker_list.speakers:
-            		speaker_id = s.speaker_id
-            		name       = s.name
+                logger().debug(f"assign_voices: read voices from assembled list")
+                for s in speaker_list.speakers:
+                    speaker_id = s.speaker_id
+                    name       = s.name
                     voice_assignment[speaker_id] = name
                     used_voices.add(name)
 

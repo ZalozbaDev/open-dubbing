@@ -206,8 +206,8 @@ class SpeechToText(ABC):
         else:
             logger().debug(f"predict_gender: read annotations from assembled list")
             for s in speaker_list.speakers:
-            	speaker_id = s.speaker_id
-            	gender     = s.gender
+                speaker_id = s.speaker_id
+                gender     = s.gender
                 speaker_gender[speaker_id] = gender
                     
         r = []

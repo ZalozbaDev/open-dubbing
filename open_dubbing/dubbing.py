@@ -42,6 +42,8 @@ from open_dubbing.utterance import Utterance
 from open_dubbing.video_processing import VideoProcessing
 from open_dubbing.speaker_list import SpeakerList
 
+from dataclasses import dataclass, field
+
 _DEFAULT_PYANNOTE_MODEL: Final[str] = "pyannote/speaker-diarization-3.1"
 _NUMBER_OF_STEPS: Final[int] = 7
 
@@ -88,7 +90,6 @@ def overwrite_input_file(input_file: str, updated_input_file: str) -> None:
 
     shutil.move(input_file, updated_input_file)
 
-
 class Dubber:
     """A class to manage the entire ad dubbing process."""
 
@@ -111,7 +112,7 @@ class Dubber:
         original_subtitles: bool = False,
         dubbed_subtitles: bool = False,
         input_srt: str | None = None,
-        speaker_list: SpeakerList = field(default_factory=SpeakerList)
+        speaker_list: SpeakerList = None
         
     ) -> None:
         self._input_file = input_file
@@ -134,6 +135,8 @@ class Dubber:
         self.original_subtitles = original_subtitles
         self.dubbed_subtitles = dubbed_subtitles
         self.input_srt = input_srt
+
+        self.speaker_list = speaker_list or SpeakerList()
 
         if cpu_threads > 0:
             torch.set_num_threads(cpu_threads)
@@ -198,28 +201,28 @@ class Dubber:
     def run_preprocessing(self) -> None:
         """Splits audio/video, applies DEMUCS, and segments audio into utterances with PyAnnote."""
         if self.input_srt:
-			near_zero = 0.00001
-			subs = pysrt.open(self.input_srt)
-			for sub in subs:
-				sub_start = self._srt_time_to_seconds(sub.start)
-				sub_end = self._srt_time_to_seconds(sub.end)
-				if (sub_start < near_zero) and (sub_end < near_zero):
-					# [SPEAKER_XY]: name, gender
-					match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
-					if match:
-						speaker_id = match.group(1)
-						name = match.group(2)
-						gender = match.group(3)
-						self.speaker_list.add_speaker(speaker_id, name, gender)
-					else:
-						logger().error(f"Could not parse {sub.text} for speaker name and gender")
+            near_zero = 0.00001
+            subs = pysrt.open(self.input_srt)
+            for sub in subs:
+                sub_start = self._srt_time_to_seconds(sub.start)
+                sub_end = self._srt_time_to_seconds(sub.end)
+                if (sub_start < near_zero) and (sub_end < near_zero):
+                    # [SPEAKER_XY]: name, gender
+                    match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
+                    if match:
+                        speaker_id = match.group(1)
+                        name = match.group(2)
+                        gender = match.group(3)
+                        self.speaker_list.add_speaker(speaker_id, name, gender)
+                    else:
+                        logger().error(f"Could not parse {sub.text} for speaker name and gender")
         
         if self.speaker_list.is_valid():
-        	logger().debug("Successfuly read these speakers from .srt")
-        	for s in self.speaker_list.speakers:
-        		print(f"{s.speaker_id}: {s.name} ({s.gender})")
+            logger().debug("Successfuly read these speakers from .srt")
+            for s in self.speaker_list.speakers:
+                print(f"{s.speaker_id}: {s.name} ({s.gender})")
         else:
-        	logger().debug("No speakers in .srt (resp no .srt at all)")
+            logger().debug("No speakers in .srt (resp no .srt at all)")
         
         video_file, audio_file = VideoProcessing.split_audio_video(
             video_file=self.input_file, output_directory=self.output_directory
@@ -235,7 +238,7 @@ class Dubber:
             demucs.assemble_split_audio_file_paths(command=demucs_command)
         )
 
-		"""Passing the .srt is ok here because the timing info will be read."""
+        """Passing the .srt is ok here because the timing info will be read."""
         device_pyannote = self.device_pyannote if self.device_pyannote else self.device
         utterance_metadata = audio_processing.create_pyannote_timestamps(
             audio_file=audio_file,

@@ -337,6 +337,8 @@ def main():
         dubbed_subtitles=args.dubbed_subtitles,
         input_srt=args.input_srt,
     )
+    
+    # print(vars(dubber))
 
     logger().info(
         f"Processing '{args.input_file}' file with stt '{stt_text}', tts '{args.tts}' and device '{args.device}'"
