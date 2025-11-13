@@ -38,6 +38,7 @@ from open_dubbing.text_to_speech_bamborak import TextToSpeechBamborak
 from open_dubbing.translation_apertium import TranslationApertium
 from open_dubbing.translation_nllb import TranslationNLLB
 from open_dubbing.translation_sotra import TranslationSotra
+from open_dubbing.translation_passthrough import TranslationPassthrough
 
 
 def _init_logging(log_level):
@@ -223,6 +224,8 @@ def _get_selected_translator(
 
         translation = TranslationSotra(device)
         translation.set_server(server)
+    elif translator == "passthrough":
+        translation = TranslationPassthrough(device)
     else:
         raise ValueError(f"Invalid translator value {translator}")
 

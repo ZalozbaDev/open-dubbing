@@ -108,12 +108,13 @@ class CommandLine:
             "--translator",
             type=str,
             default="nllb",
-            choices=["nllb", "apertium", "sotra"],
+            choices=["nllb", "apertium", "sotra", "passthrough"],
             help=(
                 "Translation engine to use. Choices are:\n"
                 "'nllb': Meta's no Language Left Behind (NLLB).\n"
                 "'apertium': Apertium compatible API server.\n"
                 "'sotra': A very custom implementation.\n"
+                "'passthrough': Do not translate at all.\n"
             ),
         )
         parser.add_argument(

@@ -81,12 +81,27 @@ if [ "$#" -gt 3 ]; then
 	export SUBSFILE=$4
 	echo "Subtitles=$SUBSFILE"
 
-	open-dubbing --input_file $FILENAME --source_language deu --target_language hsb \
-	--hugging_face_token $HF_TOKEN --output_directory $OUTDIR \
-	--translator sotra --apertium_server $SOTRA_URL \
-	--tts bamborak --tts_api_server $BAMBORAK_BACKEND \
-	--dubbed_subtitles --original_subtitles --log_level DEBUG --input_srt $SUBSFILE \
-	--device $DEVICE $UPDATE
+	if [ "$#" -gt 4 ]; then
+	
+		echo "--> Translation skipped <--"
+		
+		open-dubbing --input_file $FILENAME --source_language deu --target_language hsb \
+		--hugging_face_token $HF_TOKEN --output_directory $OUTDIR \
+		--translator passthrough --apertium_server $SOTRA_URL \
+		--tts bamborak --tts_api_server $BAMBORAK_BACKEND \
+		--dubbed_subtitles --log_level DEBUG --input_srt $SUBSFILE \
+		--device $DEVICE $UPDATE
+		
+	else
+				
+		open-dubbing --input_file $FILENAME --source_language deu --target_language hsb \
+		--hugging_face_token $HF_TOKEN --output_directory $OUTDIR \
+		--translator sotra --apertium_server $SOTRA_URL \
+		--tts bamborak --tts_api_server $BAMBORAK_BACKEND \
+		--dubbed_subtitles --original_subtitles --log_level DEBUG --input_srt $SUBSFILE \
+		--device $DEVICE $UPDATE
+		
+	fi
 
 else
 	
@@ -121,7 +136,8 @@ fi
 ##
 ## this shall work and create a result as expected
 
-
-
-
+# 5.: with an already translated .srt that contains speaker info and speaker assignments
+## rm -rf test4recniki/ && ./runme.sh ~/uploader-recny-model/test/dubbing/4recniki.mp4 HF_TOKEN test4recniki/ ~/uploader-recny-model/test/dubbing/4_recniki.hsb.speakers.assigned.srt PASSTHROUGH
+##
+## this shall work and create a result as expected
 
