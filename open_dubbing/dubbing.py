@@ -210,7 +210,7 @@ class Dubber:
                 sub_start = self._srt_time_to_seconds(sub.start)
                 sub_end = self._srt_time_to_seconds(sub.end)
                 if (sub_start < near_zero) and (sub_end < near_zero):
-                    # [SPEAKER_XY]: name, gender
+                    # [SPEAKER_XYZ]: name, gender
                     match = re.match(r"\[(.*?)\]:\s*(.*?),(.*)", sub.text)
                     if match:
                         speaker_id = match.group(1)

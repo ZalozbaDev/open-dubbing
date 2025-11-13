@@ -134,9 +134,9 @@ class SpeechToText(ABC):
                                 abs(sub_end - target_end) <= time_tolerance):
                 
                                 subtitle_text = sub.text.strip()
-                                if re.match(r'^\[SPEAKER_\d{2}\]:\s*', subtitle_text):  # If the annotation exists
-                                    # Remove the [SPEAKER_XX]: tag
-                                    subtitle_text = re.sub(r'^\[SPEAKER_\d{2}\]:\s*', '', subtitle_text)
+                                if re.match(r'^\[SPEAKER_\d+\]:\s*', subtitle_text):  # If the annotation exists
+                                    # Remove the [SPEAKER_XXYZ]: tag
+                                    subtitle_text = re.sub(r'^\[SPEAKER_\d+\]:\s*', '', subtitle_text)
                                 match = subtitle_text
                                 break
             
