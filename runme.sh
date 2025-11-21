@@ -55,8 +55,8 @@
 # you need a running "bamborak" backend and specify its API endpoint like below
 
 export SOTRA_URL=http://localhost:3000/translate
-# export BAMBORAK_BACKEND=https://bamborakapi.mudrowak.de/api/tts/
-export BAMBORAK_BACKEND=http://localhost:8080/api/tts/
+export BAMBORAK_BACKEND=https://bamborakapi.mudrowak.de/api/tts/
+# export BAMBORAK_BACKEND=http://localhost:8080/api/tts/
 
 if [ "$#" -lt 3 ]; then
 	echo "Error! Need to specify 3 args: file, hf token, outdir!"
@@ -74,8 +74,22 @@ echo "Output=$OUTDIR"
 # enable if updating only!
 # export UPDATE="--update"
 
-DEVICE="cpu"
-# DEVICE="cuda"
+# DEVICE="cpu"
+DEVICE="cuda"
+
+ADD_LIB_PATH="./lib/python3.12/site-packages/nvidia/cudnn/lib/"
+
+
+if [ "$DEVICE" == "cuda" ]; then
+	export LD_LIBRARY_PATH=$ADD_LIB_PATH:$LD_LIBRARY_PATH
+	echo "WARNING! Trying to fix cudnn library issue with custom LD_LIBRARY_PATH!"
+	echo $LD_LIBRARY_PATH
+	echo "This path may not be correct!"
+	if ! [ -e $ADD_LIB_PATH ]; then
+		echo "ERROR! $$ADD_LIB_PATH does not exist???"
+	fi
+fi
+
 
 if [ "$#" -gt 3 ]; then
 	export SUBSFILE=$4
