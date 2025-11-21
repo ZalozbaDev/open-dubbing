@@ -19,19 +19,22 @@ from datetime import timedelta
 
 class Subtitles:
 
-    def write(self, *, utterance_metadata, directory, filename, translated):
+    def write(self, *, utterance_metadata, directory, filename, translated, annotated):
         srt_file_path = os.path.join(directory, filename)
 
         with open(srt_file_path, "w", encoding="utf-8") as subtitles_file:
             for i, utterance in enumerate(utterance_metadata):
                 start_time = self.format_srt_time(utterance["start"])
                 end_time = self.format_srt_time(utterance["end"])
+                speaker_id = utterance["speaker_id"]
 
                 idx = i + 1
                 srt_content = f"{idx}\n"
                 srt_content += f"{start_time} --> {end_time}\n"
 
                 text = utterance["translated_text"] if translated else utterance["text"]
+                if annotated == True:
+                    text = "[" + speaker_id + "]: " + text
                 srt_content += f"{text}\n\n"
                 subtitles_file.write(srt_content)
         return srt_file_path
