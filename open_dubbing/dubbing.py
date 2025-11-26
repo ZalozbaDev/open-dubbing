@@ -365,6 +365,7 @@ class Dubber:
             utterance_metadata=self.utterance_metadata,
             background_audio_file=self.preprocessing_output.audio_background_file,
             output_directory=self.output_directory,
+            input_srt=self.input_srt,
         )
         dubbed_audio_file = audio_processing.merge_background_and_vocals(
             background_audio_file=self.preprocessing_output.audio_background_file,

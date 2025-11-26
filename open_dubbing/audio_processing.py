@@ -167,6 +167,7 @@ def insert_audio_at_timestamps(
     utterance_metadata: Sequence[Mapping[str, str | float]],
     background_audio_file: str,
     output_directory: str,
+    input_srt: str | None = None,
 ) -> str:
     """Inserts audio chunks into a background audio track at specified timestamps."""
     background_audio = AudioSegment.from_mp3(background_audio_file)
@@ -179,12 +180,15 @@ def insert_audio_at_timestamps(
             _file = item["dubbed_path"]
 
             if for_dubbing is False:
-                start = int(item["start"])
-                end = int(item["end"])
-                logger().debug(
-                    f"insert_audio_at_timestamps. Skipping {_file} at start time {start} and end at {end}"
-                )
-                continue
+                if not input_srt:
+                    start = int(item["start"])
+                    end = int(item["end"])
+                    logger().debug(
+                        f"insert_audio_at_timestamps. Skipping {_file} at start time {start} and end at {end}"
+                    )
+                    continue
+                else:
+                    _file = item["path"]
 
             start_time = int(item["start"] * 1000)
             logger().debug(f"insert_audio_at_timestamps. Open: {_file}")
