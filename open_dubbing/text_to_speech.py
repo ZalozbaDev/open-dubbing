@@ -220,15 +220,17 @@ class TextToSpeech(ABC):
         dubbed_file: str,
         utterance_metadata: Sequence[Mapping[str, float | str]],
         audio_file=str,
+        seek_next_start=False,
     ) -> float:
         """Returns the ratio between the reference and target duration."""
 
-        end = self.get_start_time_of_next_speech_utterance(
-            utterance_metadata=utterance_metadata,
-            start=start,
-            end=end,
-            audio_file=audio_file,
-        )
+        if seek_next_start == True:
+            end = self.get_start_time_of_next_speech_utterance(
+                utterance_metadata=utterance_metadata,
+                start=start,
+                end=end,
+                audio_file=audio_file,
+            )
 
         reference_length = end - start
         dubbed_audio = AudioSegment.from_file(dubbed_file)
