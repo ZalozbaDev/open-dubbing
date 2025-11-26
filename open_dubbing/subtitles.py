@@ -13,13 +13,14 @@
 # limitations under the License.
 
 import os
+import math
 
 from datetime import timedelta
 
 
 class Subtitles:
 
-    def write(self, *, utterance_metadata, directory, filename, translated, annotated):
+    def write(self, *, utterance_metadata, directory, filename, translated, annotated, speeds):
         srt_file_path = os.path.join(directory, filename)
 
         with open(srt_file_path, "w", encoding="utf-8") as subtitles_file:
@@ -27,6 +28,9 @@ class Subtitles:
                 start_time = self.format_srt_time(utterance["start"])
                 end_time = self.format_srt_time(utterance["end"])
                 speaker_id = utterance["speaker_id"]
+                speed = utterance["speed"]
+                
+                wanted_duration = math.ceil((utterance["end"] - utterance["start"]) * speed * 10) / 10;
 
                 idx = i + 1
                 srt_content = f"{idx}\n"
@@ -35,6 +39,8 @@ class Subtitles:
                 text = utterance["translated_text"] if translated else utterance["text"]
                 if annotated == True:
                     text = "[" + speaker_id + "]: " + text
+                if speeds == True:
+                    text = "(" + f"{wanted_duration}" + ")" + text
                 srt_content += f"{text}\n\n"
                 subtitles_file.write(srt_content)
         return srt_file_path

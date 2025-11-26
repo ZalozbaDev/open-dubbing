@@ -485,6 +485,7 @@ class Dubber:
             filename=filename,
             translated=False,
             annotated=False,
+            speeds=False,
         )
 
         filename = f"{self.target_language}.srt"
@@ -494,6 +495,7 @@ class Dubber:
             filename=filename,
             translated=True,
             annotated=False,
+            speeds=False,
         )
 
         filename = f"{self.target_language}.annotated.srt"
@@ -503,6 +505,17 @@ class Dubber:
             filename=filename,
             translated=True,
             annotated=True,
+            speeds=False,
+        )
+
+        filename = f"{self.target_language}.annotated.speeds.srt"
+        target_srt = subtitles.write(
+            utterance_metadata=self.utterance_metadata,
+            directory=self.output_directory,
+            filename=filename,
+            translated=True,
+            annotated=True,
+            speeds=True,
         )
 
         subtitles_files = []
