@@ -153,6 +153,8 @@ class SpeechToText(ABC):
                 transcribed_text = ""
 
             dubbing = len(transcribed_text) > 0
+            if transcribed_text == "COPY":
+                dubbing = False;
             logger().debug(
                 f"transcribe_audio_chunks. text: '{transcribed_text}' - dubbing: {dubbing}"
             )
