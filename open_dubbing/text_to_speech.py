@@ -37,7 +37,7 @@ class TextToSpeech(ABC):
     def __init__(self):
         self._SSML_MALE: Final[str] = "Male"
         self._SSML_FEMALE: Final[str] = "Female"
-        self._DEFAULT_SPEED: Final[float] = 1.0
+        self._DEFAULT_SPEED: Final[float] = 1.5
 
     @abstractmethod
     def get_available_voices(self, language_code: str) -> List[Voice]:
@@ -359,7 +359,7 @@ class TextToSpeech(ABC):
                     )
 
                     # some of our voices are really slow
-                    MAX_SPEED = 3
+                    MAX_SPEED = 2.5
                     if speed > MAX_SPEED:
                         logger().debug(
                             f"text_to_speech.dub_utterances: Reduced speed from {speed} to {MAX_SPEED}"

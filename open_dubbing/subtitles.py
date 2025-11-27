@@ -37,10 +37,17 @@ class Subtitles:
                 srt_content += f"{start_time} --> {end_time}\n"
 
                 text = utterance["translated_text"] if translated else utterance["text"]
+                
+                # add the speaker annotation for working document
                 if annotated == True:
                     text = "[" + speaker_id + "]: " + text
+                
+                # add speed indication (too slow, too fast) for working document
                 if speeds == True:
-                    text = "(" + f"{wanted_duration}" + ")" + text
+                    # assume speeds below 1.1 and above 1.9 to be too fast
+                    if speed <= 1.1 or speed >= 1.9:
+                        text = "(" + f"{wanted_duration}" + ")" + text
+                
                 srt_content += f"{text}\n\n"
                 subtitles_file.write(srt_content)
         return srt_file_path
