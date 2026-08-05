@@ -27,6 +27,10 @@ from typing import Final
 import psutil
 import torch
 
+os.environ["TORCH_FORCE_WEIGHTS_ONLY_LOAD"] = "0"
+
+import pyannote
+import omegaconf
 from pyannote.audio import Pipeline
 
 from open_dubbing import audio_processing, logger
@@ -181,15 +185,21 @@ class Dubber:
         """Loads the PyAnnote diarization pipeline."""
 
         # Allow pyannote and omegaconf classes to bypass the safe loader
-        torch.serialization.add_safe_globals([
-            "omegaconf.listconfig.ListConfig",
-            "omegaconf.dictconfig.DictConfig",
-            "pyannote.audio.core.task.Specifications"
-        ])
+#        torch.serialization.add_safe_globals([
+#            "omegaconf.listconfig.ListConfig",
+#            "omegaconf.dictconfig.DictConfig",
+#            "pyannote.audio.core.task.Specifications"
+#        ])
+        torch.serialization.add_safe_globals([torch.torch_version.TorchVersion,
+            pyannote.audio.core.task.Specifications,
+            omegaconf.listconfig.ListConfig,
+            omegaconf.dictconfig.DictConfig,
+            pyannote.audio.core.task.Problem,
+            pyannote.audio.core.task.Resolution])
 
 
         return Pipeline.from_pretrained(
-            self.pyannote_model, use_auth_token=self.hugging_face_token
+            self.pyannote_model, token=self.hugging_face_token
         )
 
     def _verify_api_access(self) -> None:
