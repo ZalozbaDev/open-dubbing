@@ -38,6 +38,23 @@ class TextToSpeechBamborak(TextToSpeech):
     def get_available_voices(self, language_code: str) -> List[Voice]:
         voices = []
 
+        # Beno
+        voice = Voice(
+            name="beno",
+            gender="male",
+            region="lusatia",
+        )
+        voices.append(voice)
+
+        # Michal
+        voice = Voice(
+            name="michal",
+            gender="male",
+            region="lusatia",
+        )
+        voices.append(voice)
+
+        # Korla (kostrjanc)
         voice = Voice(
             name="korla2",
             gender="male",
@@ -45,20 +62,15 @@ class TextToSpeechBamborak(TextToSpeech):
         )
         voices.append(voice)
 
+        # Katka
         voice = Voice(
-            name="cyril",
-            gender="male",
+            name="katka_2025_07",
+            gender="female",
             region="lusatia",
         )
         voices.append(voice)
 
-        voice = Voice(
-            name="michal_multi_2025_02_20",
-            gender="male",
-            region="lusatia",
-        )
-        voices.append(voice)
-
+        # Weronika
         voice = Voice(
             name="weronika",
             gender="female",
@@ -66,15 +78,9 @@ class TextToSpeechBamborak(TextToSpeech):
         )
         voices.append(voice)
 
+        # Hanaroza
         voice = Voice(
-            name="multi_2025_02_11/VCTK_old_16",
-            gender="female",
-            region="lusatia",
-        )
-        voices.append(voice)
-
-        voice = Voice(
-            name="katka_2025_07",
+            name="hanaroza",
             gender="female",
             region="lusatia",
         )
@@ -102,7 +108,7 @@ class TextToSpeechBamborak(TextToSpeech):
         voice_parts = assigned_voice.split('+')
         
         voice_name = voice_parts[0]
-        payload = {'text':text,'speaker_id':voice_name}
+        payload = {'text':text,'speaker_id':voice_name,'format':'mp3'}
         
         if len(voice_parts) >= 2:
             voice_timbre = voice_parts[1]
