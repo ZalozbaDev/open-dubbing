@@ -112,11 +112,11 @@ class TextToSpeechBamborak(TextToSpeech):
         
         if len(voice_parts) >= 2:
             voice_timbre = voice_parts[1]
-            payload = {'text':text,'speaker_id':voice_name,'timbre_id':voice_timbre}
+            payload = {'text':text,'speaker_id':voice_name,'format':'mp3','timbre_id':voice_timbre}
             
         if len(voice_parts) >= 3:
             voice_emotion = voice_parts[2]
-            payload = {'text':text,'speaker_id':voice_name,'timbre_id':voice_timbre,'emotion':voice_emotion}
+            payload = {'text':text,'speaker_id':voice_name,'format':'mp3','timbre_id':voice_timbre,'emotion':voice_emotion}
 
         headers = {'Content-Type':'application/json'}
 
