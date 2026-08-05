@@ -179,6 +179,15 @@ class Dubber:
     @functools.cached_property
     def pyannote_pipeline(self) -> Pipeline:
         """Loads the PyAnnote diarization pipeline."""
+
+        # Allow pyannote and omegaconf classes to bypass the safe loader
+        torch.serialization.add_safe_globals([
+            "omegaconf.listconfig.ListConfig",
+            "omegaconf.dictconfig.DictConfig",
+            "pyannote.audio.core.task.Specifications"
+        ])
+
+
         return Pipeline.from_pretrained(
             self.pyannote_model, use_auth_token=self.hugging_face_token
         )
