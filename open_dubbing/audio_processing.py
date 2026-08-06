@@ -30,6 +30,8 @@ from pyannote.audio import Pipeline
 from open_dubbing import logger
 from open_dubbing.pydub_audio_segment import AudioSegment
 
+from open_dubbing.ffmpeg import FFmpeg
+
 _DEFAULT_DUBBED_VOCALS_AUDIO_FILE: Final[str] = "dubbed_vocals.mp3"
 _DEFAULT_DUBBED_AUDIO_FILE: Final[str] = "dubbed_audio"
 _DEFAULT_OUTPUT_FORMAT: Final[str] = ".mp3"
@@ -53,7 +55,9 @@ def create_pyannote_timestamps(
             warnings.filterwarnings("ignore", category=UserWarning)
             if device == "cuda":
                 pipeline.to(torch.device("cuda"))
-            diarization = pipeline(audio_file)
+            temp_filename_wav = audio_file + '.wav';
+            FFmpeg().convert_to_format(source=audio_file,target=temp_filename_wav)
+            diarization = pipeline(temp_filename_wav)
             newdiarization = diarization.speaker_diarization
             utterance_metadata = [
                 {"start": segment.start, "end": segment.end, "speaker_id": speaker}
