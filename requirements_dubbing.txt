@@ -3,7 +3,7 @@ moviepy == 2.2.1
 demucs == 4.0.1
 psutil == 6.0.0
 # torch >= 2.0.0,< 2.7.1
-# pyannote.audio == 3.3.2
+pyannote.audio == 4.0.7
 ctranslate2 >= 4.1.0, <= 4.6.0
 faster-whisper == 1.1.1
 transformers >= 4.40, <= 4.45.2
@@ -11,3 +11,9 @@ transformers >= 4.40, <= 4.45.2
 iso639-lang == 2.3.0
 edge-tts == 6.1.12
 audioop-lts; python_version>='3.13'
+pysrt
+matplotlib==3.10.7
+
+torch==2.8.0
+torchaudio==2.8.0
+torchcodec==0.7
