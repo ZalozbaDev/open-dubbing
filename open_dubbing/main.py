@@ -330,6 +330,11 @@ def main():
     dubbed_file = tts._convert_text_to_speech(assigned_voice="weronika+katka_2025_07+sad",target_language="hsb",output_filename="testvoice4.mp3",text="Haj.", speed=0)
     print("TTS test 4 - changed voice with emotion, short audio:");
     print(dubbed_file);
+    dubbed_file = tts._convert_text_to_speech(assigned_voice="thorsten",target_language="de",output_filename="testvoice5.mp3",text="Dies ist ein Versuch.", speed=0)
+    print("TTS test 5 - German voice, to test STT.");
+    print(dubbed_file);
+    recognized_text = stt._transcribe(vocals_filepath=dubbed_file, source_language_iso_639_1="de")
+    print(recognized_text)
 
     dubber = Dubber(
         input_file=args.input_file,
