@@ -64,7 +64,7 @@ class TextToSpeechBamborak(TextToSpeech):
 
         # Katka
         voice = Voice(
-            name="katka_2025_07",
+            name="katka",
             gender="female",
             region="lusatia",
         )
